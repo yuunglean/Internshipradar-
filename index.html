@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>Internshipradar</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0d8f79">
+<meta name="theme-color" content="#0a0f24">
 <meta name="description" content="Oversikt over internships, sommerjobber og traineeprogram innen business og økonomi.">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,86 +21,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f3f5f4;
-    --surface: #ffffff;
-    --surface-raised: #f7f9f8;
-    --ink: #0f1a17;
-    --ink-soft: #57655f;
-    --ink-faint: #8b9791;
-    --line: #e1e6e3;
-    --line-strong: #cad2ce;
-    --accent: #0d8f79;
-    --accent-ink: #ffffff;
-    --accent-soft: #dcf1ec;
-    --gold: #c67a1e;
-    --gold-soft: #fbe9d3;
-    --status-open: #0d8f79;
-    --status-open-soft: #dcf1ec;
-    --status-soon: #c67a1e;
-    --status-soon-soft: #fbe9d3;
-    --status-closed: #c14e42;
-    --status-closed-soft: #fae2de;
-    --status-upcoming: #3d6b8a;
-    --status-upcoming-soft: #dde8ee;
-    --shadow: 0 1px 2px rgba(15, 26, 23, 0.04), 0 12px 28px -14px rgba(15, 26, 23, 0.16);
-    --shadow-hover: 0 4px 10px -2px rgba(15, 26, 23, 0.08), 0 20px 36px -16px rgba(15, 26, 23, 0.22);
-    --focus: #0d8f79;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0c1412;
-      --surface: #131f1c;
-      --surface-raised: #182723;
-      --ink: #eaf1ee;
-      --ink-soft: #9dada6;
-      --ink-faint: #66766f;
-      --line: #223330;
-      --line-strong: #2e433d;
-      --accent: #33d1ae;
-      --accent-ink: #052620;
-      --accent-soft: #163a33;
-      --gold: #e6a94f;
-      --gold-soft: #3a2c15;
-      --status-open: #33d1ae;
-      --status-open-soft: #163a33;
-      --status-soon: #e6a94f;
-      --status-soon-soft: #3a2c15;
-      --status-closed: #e58a7d;
-      --status-closed-soft: #3a1f1a;
-      --status-upcoming: #7fb8d9;
-      --status-upcoming-soft: #1c3140;
-      --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 14px 32px -16px rgba(0, 0, 0, 0.6);
-      --shadow-hover: 0 6px 14px -4px rgba(0, 0, 0, 0.4), 0 22px 40px -18px rgba(0, 0, 0, 0.7);
-      --focus: #33d1ae;
-    }
-  }
-
-  :root[data-theme="dark"] {
-    --bg: #0c1412;
-    --surface: #131f1c;
-    --surface-raised: #182723;
-    --ink: #eaf1ee;
-    --ink-soft: #9dada6;
-    --ink-faint: #66766f;
-    --line: #223330;
-    --line-strong: #2e433d;
-    --accent: #33d1ae;
-    --accent-ink: #052620;
-    --accent-soft: #163a33;
-    --gold: #e6a94f;
-    --gold-soft: #3a2c15;
-    --status-open: #33d1ae;
-    --status-open-soft: #163a33;
-    --status-soon: #e6a94f;
-    --status-soon-soft: #3a2c15;
-    --status-closed: #e58a7d;
-    --status-closed-soft: #3a1f1a;
-    --status-upcoming: #7fb8d9;
-    --status-upcoming-soft: #1c3140;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 14px 32px -16px rgba(0, 0, 0, 0.6);
-    --shadow-hover: 0 6px 14px -4px rgba(0, 0, 0, 0.4), 0 22px 40px -18px rgba(0, 0, 0, 0.7);
-    --focus: #33d1ae;
+    --bg: #0a0f24;
+    --surface: #10172f;
+    --surface-raised: #161f3d;
+    --ink: #eef0f8;
+    --ink-soft: #9aa3c4;
+    --ink-faint: #676f95;
+    --line: #1e2745;
+    --line-strong: #2a3459;
+    --accent: #3fd6bd;
+    --accent-ink: #06231f;
+    --accent-soft: rgba(63, 214, 189, 0.13);
+    --gold: #a99bde;
+    --gold-soft: rgba(169, 155, 222, 0.13);
+    --status-open: #3fd6bd;
+    --status-open-soft: rgba(63, 214, 189, 0.13);
+    --status-soon: #a99bde;
+    --status-soon-soft: rgba(169, 155, 222, 0.14);
+    --status-closed: #8891b3;
+    --status-closed-soft: rgba(136, 145, 179, 0.14);
+    --status-upcoming: #8fb2e8;
+    --status-upcoming-soft: rgba(143, 178, 232, 0.13);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 16px 34px -18px rgba(0, 0, 0, 0.55);
+    --shadow-hover: 0 6px 16px -4px rgba(0, 0, 0, 0.3), 0 24px 42px -18px rgba(0, 0, 0, 0.6);
+    --focus: #3fd6bd;
   }
 
   * { box-sizing: border-box; }
@@ -112,12 +56,12 @@
     font-family: "Manrope", -apple-system, "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
     padding-inline: 20px;
-    padding-block: 28px 64px;
+    padding-block: 40px 80px;
   }
 
   .wrap { max-width: 760px; margin: 0 auto; }
 
-  header.top { margin-bottom: 24px; }
+  header.top { margin-bottom: 34px; }
 
   .eyebrow {
     display: inline-flex;
@@ -169,11 +113,10 @@
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 14px;
-    padding: 11px 16px;
+    padding: 12px 18px;
     display: flex;
     align-items: baseline;
     gap: 8px;
-    box-shadow: var(--shadow);
   }
 
   .stat b {
@@ -229,8 +172,8 @@
     flex-wrap: wrap;
     gap: 10px;
     align-items: center;
-    margin: 28px 0 18px;
-    padding-bottom: 18px;
+    margin: 36px 0 26px;
+    padding-bottom: 24px;
     border-bottom: 1px solid var(--line);
   }
 
@@ -247,6 +190,11 @@
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
   input[type="search"]:focus-visible { box-shadow: 0 0 0 3px var(--accent-soft); }
+  input[type="search"]::placeholder,
+  textarea.notes::placeholder {
+    color: #ffffff;
+    opacity: 0.85;
+  }
 
   input[type="search"]:focus-visible,
   select:focus-visible,
@@ -257,58 +205,47 @@
     outline-offset: 1px;
   }
 
-  .chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
-
-  .chip {
-    font-family: "Manrope", sans-serif;
-    font-size: 12.5px;
+  select.field-select {
+    flex: none;
+    font: inherit;
+    font-size: 13.5px;
     font-weight: 600;
-    padding: 7px 13px;
-    border-radius: 999px;
+    padding: 10px 34px 10px 16px;
+    border-radius: 11px;
     border: 1px solid var(--line-strong);
-    background: var(--surface);
-    color: var(--ink-soft);
+    background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%239aa3c4' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5'/%3E%3C/svg%3E") no-repeat right 14px center;
+    color: var(--ink);
     cursor: pointer;
-    line-height: 1.2;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s ease;
   }
-  .chip:hover { border-color: var(--accent); color: var(--accent); }
-  .chip:active { transform: scale(0.97); }
+  select.field-select:focus-visible { border-color: var(--accent); }
 
-  .chip[aria-pressed="true"] {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: var(--accent-ink);
-  }
-  .chip[aria-pressed="true"]:hover { color: var(--accent-ink); }
-
-  .list { display: flex; flex-direction: column; gap: 12px; }
-
-  @keyframes card-in {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  .list { display: flex; flex-direction: column; gap: 18px; }
 
   .card {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 18px;
-    padding: 18px 20px;
-    box-shadow: var(--shadow);
+    padding: 24px 26px;
     display: grid;
-    gap: 12px;
+    gap: 14px;
     border-left: 3px solid var(--line-strong);
-    transition: box-shadow 0.18s ease, transform 0.18s ease, border-left-color 0.18s ease;
-    animation: card-in 0.28s ease both;
+    transition: box-shadow 0.18s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-left-color 0.18s ease, opacity 0.5s ease;
+    opacity: 0;
+    transform: translateY(22px);
   }
+  .card.in-view { opacity: 1; transform: translateY(0); }
   .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+  .card.in-view:hover { transform: translateY(-2px); }
   .card.urgency-open { border-left-color: var(--status-open); }
   .card.urgency-soon { border-left-color: var(--status-soon); }
   .card.urgency-closed { border-left-color: var(--line-strong); }
   .card.urgency-upcoming { border-left-color: var(--status-upcoming); }
 
   @media (prefers-reduced-motion: reduce) {
-    .card { animation: none; transition: none; }
+    .card { opacity: 1; transform: none; transition: none; }
     .card:hover { transform: none; }
   }
 
@@ -398,17 +335,17 @@
 
   .deadline-chip .dl-sub {
     display: block;
-    margin-top: 5px;
-    padding-top: 5px;
-    border-top: 1px dashed currentColor;
-    opacity: 0.7;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid currentColor;
+    opacity: 0.55;
     font-size: 10.5px;
     font-weight: 500;
   }
 
-  .deadline-chip.open { background: var(--status-open-soft); color: var(--status-open); }
+  .deadline-chip.open { background: transparent; color: var(--status-open); }
   .deadline-chip.soon { background: var(--status-soon-soft); color: var(--status-soon); }
-  .deadline-chip.closed { background: var(--status-closed-soft); color: var(--status-closed); }
+  .deadline-chip.closed { background: transparent; color: var(--ink-faint); }
   .deadline-chip.upcoming { background: var(--status-upcoming-soft); color: var(--status-upcoming); }
 
   .desc {
@@ -424,8 +361,7 @@
     gap: 8px;
     align-items: center;
     justify-content: space-between;
-    border-top: 1px solid var(--line);
-    padding-top: 10px;
+    padding-top: 4px;
   }
 
   .field-tag {
@@ -612,6 +548,51 @@
     text-align: center;
   }
 
+  .landing[hidden] { display: none; }
+
+  .landing {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 16px;
+    padding: 20px 10px;
+  }
+
+  .landing h1 { font-size: clamp(34px, 8vw, 52px); }
+
+  .landing-sub {
+    color: var(--ink-soft);
+    font-size: 15px;
+    max-width: 46ch;
+    line-height: 1.6;
+    margin: 0 0 6px;
+  }
+
+  button.landing-cta {
+    font: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 15px 30px;
+    border-radius: 999px;
+    border: none;
+    background: var(--accent);
+    color: var(--accent-ink);
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.1s ease;
+  }
+  button.landing-cta:hover { filter: brightness(1.08); }
+  button.landing-cta:active { transform: scale(0.97); }
+
+  .landing-count {
+    margin-top: 2px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+
   @media (max-width: 480px) {
     .card-top { flex-direction: column; }
     .deadline-chip { text-align: left; align-self: flex-start; }
@@ -622,10 +603,18 @@
 </head>
 <body>
 <div class="wrap">
-  <header class="top">
-    <p class="eyebrow">Økonomi &amp; business · student-radar</p>
+  <div class="landing" id="landing">
+    <p class="eyebrow">Næringsliv · karriereradar</p>
     <h1>Internshipradar</h1>
-    <p class="sub">Oversikt over internships, sommerjobber og traineeprogram innen business og økonomi. Du styrer selv listen: legg til funn og merk status underveis.</p>
+    <p class="landing-sub">Finn ditt neste internship, sommerjobb eller traineeprogram. Vi søker automatisk etter nye stillinger hver dag.</p>
+    <button type="button" class="landing-cta" id="landing-cta">Se tilgjengelige internships</button>
+    <p class="landing-count" id="landing-count" hidden></p>
+  </div>
+
+  <div id="app-view" hidden>
+  <header class="top">
+    <p class="eyebrow">Næringsliv · karriereradar</p>
+    <h1>Internshipradar</h1>
     <div class="stats" id="stats"></div>
     <div class="ios-tip" id="ios-tip" hidden>
       <span>Legg appen på hjemskjermen: trykk <span class="share-glyph" aria-label="Del-ikonet"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M7.5 8.5L12 4l4.5 4.5"/><path d="M5 12.5v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg></span> nederst i Safari, velg <strong>Legg til på Hjem-skjerm</strong>.</span>
@@ -635,7 +624,7 @@
 
   <section class="controls">
     <input type="search" id="search" placeholder="Søk selskap eller tittel …" aria-label="Søk">
-    <div class="chip-row" id="field-filters"></div>
+    <select class="field-select" id="field-filters" aria-label="Filtrer på område"></select>
   </section>
 
   <div class="list" id="list"></div>
@@ -688,6 +677,7 @@
   </div>
 
   <p class="footnote">Internships hentes fra en delt liste som oppdateres automatisk hver dag. Din egen status og dine notater lagres kun på denne enheten.</p>
+  </div>
 </div>
 
 <script>
@@ -709,7 +699,7 @@
       deadline: "2026-09-23",
       url: "https://emp.jobylon.com/jobs/378475-pwc-norway-klar-for-a-skape-sommerminner-for-livet-vi-soker-summer-interns-til-consulting-og-dealsstrategy-sommeren-2027/",
       source: "PwC Norge",
-      description: "4.-årsstudenter, medio juni–medio august 2027 med tre ukers ferie i juli.",
+      description: "Førsteårs masterstudenter (økonomi, finans, teknologi m.m.). 8-10 uker sommeren 2027, oppstart medio juni, med tre ukers ferie i juli.",
       myStatus: "ny", notes: "", manual: false
     },
     {
@@ -721,7 +711,7 @@
       deadline: "2026-10-04",
       url: "https://emp.jobylon.com/jobs/378486-pwc-norway-student-og-nysgjerrig-pa-revisjon-vi-soker-winter-interns-med-oppstart-januar-2027/",
       source: "PwC Norge",
-      description: "2.-5.-årsstudenter, oppstart januar 2027, 60-100% stilling ut mars/april.",
+      description: "2.-5. studieår, oppstart januar 2027 (2-4 måneder). 60-100% stilling, 80-100% i Oslo/Bergen/Stavanger.",
       myStatus: "ny", notes: "", manual: false
     },
     {
@@ -731,21 +721,21 @@
       location: "Oslo, Kristiansand, Bergen, Stavanger, Trondheim, Tromsø",
       field: "Revisjon & rådgivning",
       deadline: "2026-12-31",
-      url: "https://web103.reachmee.com/ext/I021/1897/job?site=6&lang=NO",
+      url: "https://www.pwc.no/no/karriere/nyutdannede-og-studenter/trainee-i-advokatfirmaet-pwc.html",
       source: "PwC Norge",
-      description: "For jusstudenter, 4-6 uker, rekrutteres hovedsakelig via karrieredager.",
+      description: "For jusstudenter innen skatt/forretningsjus, 4-6 uker. Rekrutteres hovedsakelig via Arbeidslivsdagene (ALD), fortløpende vurdering.",
       myStatus: "ny", notes: "", manual: false
     },
     {
       id: "sparebank1-forvaltning-2027",
-      title: "Internship 2027",
+      title: "Forvaltning Internship 2027",
       company: "SpareBank 1 Forvaltning",
       location: "Oslo",
       field: "Kapitalforvaltning",
       deadline: "2026-09-20",
       url: "https://nu.nhhs.no/jobs/1967/details",
       source: "nu.nhhs.no",
-      description: "3 interns, jan–feb 2027, spor innen data/teknologi, finans/business eller salg.",
+      description: "3 interns, oppstart tidlig januar 2027 (6-8 uker). Spor innen data/teknologi, økonomi/virksomhetsstyring eller salg og distribusjon.",
       myStatus: "ny", notes: "", manual: false
     },
     {
@@ -757,7 +747,7 @@
       deadline: "2026-10-04",
       url: "https://www.nu.nhhs.no/jobs/1945/details",
       source: "nu.nhhs.no",
-      description: "6 uker, betalt, fem fagområder inkl. Finance og Song. Fast-track til graduate 2028.",
+      description: "6 uker, betalt, 28. juni–6. august 2027. Fem fagområder: Industry & Enterprise, Supply Chain & Engineering, Talent, Finance eller Song.",
       myStatus: "ny", notes: "", manual: false
     },
     {
@@ -769,7 +759,7 @@
       deadline: "2026-10-16",
       url: "https://nu.nhhs.no/jobs/1998/details",
       source: "nu.nhhs.no",
-      description: "8 uker, medio juni–medio august. Roller innen bl.a. finans og business, for 3.-4. kull.",
+      description: "8 uker fra 7. juni 2027. Roller innen bl.a. finans/økonomi/business og engineering, for 3.-4. kull med gode resultater.",
       myStatus: "ny", notes: "", manual: false
     },
     {
@@ -782,19 +772,19 @@
       deadline: "2026-10-15",
       url: "https://www.nbim.no/en/about-us/career/summer-internship/",
       source: "NBIM",
-      description: "8 uker juni–august. Investeringsforvaltning, risiko, trading m.m.",
+      description: "8 uker juni–august 2027. Investeringsforvaltning, risiko, trading m.m. Åpent for alle studenter.",
       myStatus: "ny", notes: "", manual: false
     },
     {
       id: "deloitte-ma-strategy-transactions-2027",
-      title: "Internship – M&A (Strategy & Transactions)",
+      title: "Summer and Winter Internship – Strategy & Transactions",
       company: "Deloitte",
       location: "Oslo",
       field: "Investeringsbank & finans",
       deadline: "2026-10-11",
       url: "https://jobs.smartrecruiters.com/DeloitteNordic/744000148204514",
       source: "Deloitte Norge",
-      description: "Vinter (6.-29. jan) eller sommer (10. juni–13. aug) 2027. Verdivurdering, finansiell modellering og due diligence ved oppkjøp og salg.",
+      description: "Vinter (6.-29. jan) eller sommer (10. juni–13. aug) 2027, tre ukers ferie i juli. Verdivurdering, finansiell modellering og due diligence ved oppkjøp og salg.",
       myStatus: "ny", notes: "", manual: false
     },
     {
@@ -818,7 +808,7 @@
       deadline: "2026-10-11",
       url: "https://jobs.smartrecruiters.com/DeloitteNordic/744000148211429",
       source: "Deloitte Norge",
-      description: "Sommerinternship 10. juni–13. aug 2027. SAP, AI & Data, Supply Chain, Human Capital eller Digital.",
+      description: "Sommerinternship 10. juni–13. august 2027, tre ukers ferie i juli. SAP, AI & Data, Supply Chain, Human Capital eller Digital.",
       myStatus: "ny", notes: "", manual: false
     },
     {
@@ -856,8 +846,46 @@
     addToggle: document.getElementById("add-toggle"),
     addForm: document.getElementById("add-form"),
     iosTip: document.getElementById("ios-tip"),
-    iosTipClose: document.getElementById("ios-tip-close")
+    iosTipClose: document.getElementById("ios-tip-close"),
+    landing: document.getElementById("landing"),
+    appView: document.getElementById("app-view"),
+    landingCta: document.getElementById("landing-cta"),
+    landingCount: document.getElementById("landing-count")
   };
+
+  function showLanding() {
+    els.landing.hidden = false;
+    els.appView.hidden = true;
+  }
+
+  function showApp() {
+    els.landing.hidden = true;
+    els.appView.hidden = false;
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+
+  els.landingCta.addEventListener("click", function () {
+    showApp();
+    try { history.pushState({ view: "internships" }, "", "#internships"); } catch (e) {}
+  });
+
+  window.addEventListener("popstate", function (e) {
+    if (e.state && e.state.view === "internships") {
+      showApp();
+    } else {
+      showLanding();
+    }
+  });
+
+  (function initView() {
+    if (location.hash === "#internships") {
+      showApp();
+      try { history.replaceState({ view: "internships" }, "", "#internships"); } catch (e) {}
+    } else {
+      showLanding();
+      try { history.replaceState({ view: "landing" }, "", location.pathname + location.search); } catch (e) {}
+    }
+  })();
 
   function loadOverlay() {
     try {
@@ -998,17 +1026,20 @@
   function renderFieldFilters() {
     els.fieldFilters.innerHTML = "";
     FIELD_OPTIONS.forEach(function (f) {
-      var b = document.createElement("button");
-      b.className = "chip";
-      b.type = "button";
-      b.textContent = f;
-      b.setAttribute("aria-pressed", String(state.activeField === f));
-      b.addEventListener("click", function () {
-        state.activeField = f;
-        render();
-      });
-      els.fieldFilters.appendChild(b);
+      var o = document.createElement("option");
+      o.value = f;
+      o.textContent = f;
+      els.fieldFilters.appendChild(o);
     });
+    els.fieldFilters.value = state.activeField;
+    els.fieldFilters.addEventListener("change", function () {
+      state.activeField = els.fieldFilters.value;
+      render();
+    });
+  }
+
+  function updateFieldFilterStates() {
+    els.fieldFilters.value = state.activeField;
   }
 
   function matches(item) {
@@ -1162,6 +1193,44 @@
     addStat(String(soon), "frist innen 14 dager", true);
     var applied = state.items.filter(function (it) { return it.myStatus === "søkt"; }).length;
     addStat(String(applied), "søkt på", false);
+
+    updateFieldFilterStates();
+    updateLandingCount(open.length);
+    observeCards();
+  }
+
+  function updateLandingCount(openCount) {
+    if (!els.landingCount) return;
+    if (openCount > 0) {
+      els.landingCount.textContent = openCount + " internships åpne akkurat nå";
+      els.landingCount.hidden = false;
+    } else {
+      els.landingCount.hidden = true;
+    }
+  }
+
+  var prefersReducedMotion = (function () {
+    try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
+  })();
+
+  var cardObserver = (window.IntersectionObserver && !prefersReducedMotion)
+    ? new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in-view");
+            cardObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.08, rootMargin: "0px 0px -40px 0px" })
+    : null;
+
+  function observeCards() {
+    var cards = document.querySelectorAll(".card:not(.in-view)");
+    if (!cardObserver) {
+      cards.forEach(function (c) { c.classList.add("in-view"); });
+      return;
+    }
+    cards.forEach(function (c) { cardObserver.observe(c); });
   }
 
   function addStat(num, label, warn) {
