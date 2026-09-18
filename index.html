@@ -2142,6 +2142,11 @@
     measurementId: "G-ZKCQS262G1"
   };
 
+  // Generert i Firebase-konsollen: Project Settings → Cloud Messaging →
+  // Web Push certificates ("Generer nøkkelpar"). Push-varsler (som kommer selv
+  // om siden er lukket) er avslått helt til denne er fylt inn med en ekte nøkkel.
+  var VAPID_KEY = "SETT_INN_DIN_VAPID_NOKKEL_HER";
+
   var fbApp, fbAuth, fbDb;
   var appMod, authMod, fsMod;
 
@@ -2159,6 +2164,71 @@
     // innloggingsknappen helt og la resten av appen fortsette uforstyrret.
     hideAuthUI();
     return;
+  }
+
+  // Cloud Messaging (push-varsler) er en HELT egen, valgfri bit oppå resten av
+  // Firebase-oppsettet: hvis nettleseren ikke støtter det (f.eks. eldre Safari/
+  // iOS) eller modulen ikke laster, skal verken innlogging eller synk påvirkes —
+  // brukeren beholder da bare de vanlige varslene som krever at fanen er åpen.
+  var messagingMod = null;
+  var fbMessaging = null;
+  try {
+    messagingMod = await import(SDK + "firebase-messaging.js");
+    var supported = await messagingMod.isSupported();
+    if (supported) {
+      fbMessaging = messagingMod.getMessaging(fbApp);
+      messagingMod.onMessage(fbMessaging, function (payload) {
+        // Push kom mens fanen faktisk var åpen — FCM viser da ikke varselet
+        // automatisk, så vi må vise det selv med samme API som de vanlige
+        // frist-varslene bruker.
+        var n = payload && payload.notification ? payload.notification : {};
+        try {
+          new Notification(n.title || "Internshipradar", {
+            body: n.body || "",
+            tag: (payload.data && payload.data.tag) || "internshipradar-push"
+          });
+        } catch (e) {}
+      });
+    }
+  } catch (e) {
+    messagingMod = null;
+    fbMessaging = null;
+  }
+
+  function pushNotifyLocallyEnabled() {
+    try { return localStorage.getItem("internshipradar_notify_enabled") === "1"; } catch (e) { return false; }
+  }
+
+  // Registrerer denne enheten for push-varsler ved å be om en FCM-token og lagre
+  // den på brukerens Firestore-dokument, slik at den daglige, automatiske jobben
+  // kan finne den igjen og sende et push-varsel selv om ingen har siden åpen.
+  // Krever innlogging (vi trenger et sted å lagre tokenet), varsel-tillatelse
+  // gitt i nettleseren, og at "Varsle meg om frister" er slått på.
+  function registerPushForCurrentUser() {
+    if (!fbMessaging || !messagingMod || !currentUid) return;
+    if (!window.Notification || Notification.permission !== "granted") return;
+    if (!pushNotifyLocallyEnabled()) return;
+    if (!VAPID_KEY || VAPID_KEY.indexOf("SETT_INN") === 0) return;
+
+    navigator.serviceWorker.register("firebase-messaging-sw.js").then(function (registration) {
+      return messagingMod.getToken(fbMessaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+    }).then(function (token) {
+      if (!token || !currentUid) return;
+      var ref = fsMod.doc(fbDb, "users", currentUid);
+      return fsMod.setDoc(ref, { fcmTokens: fsMod.arrayUnion(token) }, { merge: true });
+    }).catch(function () {
+      // Push-registrering feilet (avslått, ikke støttet, e.l.) — påvirker ikke
+      // resten av appen, brukeren har fortsatt de vanlige åpen-fane-varslene.
+    });
+  }
+
+  var notifyToggleBtn = document.getElementById("notify-toggle");
+  if (notifyToggleBtn) {
+    notifyToggleBtn.addEventListener("click", function () {
+      // Kort forsinkelse slik at nettleserens tillatelse-dialog (hvis den vises)
+      // rekker å bli besvart før vi sjekker Notification.permission.
+      setTimeout(registerPushForCurrentUser, 300);
+    });
   }
 
   var AUTH_ERROR_MESSAGES = {
@@ -2386,6 +2456,10 @@
         window.InternshipradarBridge.onChange = debouncedPush;
       }
       loadFromFirestoreAndMerge(user.uid);
+      // Hvis varsler allerede er slått på i nettleseren (fra tidligere, eller på
+      // en annen enhet), registrer push med en gang etter innlogging også — ikke
+      // bare når man klikker "Varsle meg om frister"-knappen.
+      registerPushForCurrentUser();
     } else {
       currentUid = null;
       if (signedOutBox) signedOutBox.hidden = false;
