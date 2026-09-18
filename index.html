@@ -89,6 +89,16 @@
   }
   button.auth-btn:hover { border-color: var(--accent); color: var(--accent); }
   button.auth-btn-ghost { background: none; }
+  .auth-edit-name-btn {
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 4px;
+    line-height: 1;
+  }
+  .auth-edit-name-btn:hover { color: var(--accent); }
 
   .auth-modal[hidden] { display: none; }
   .auth-modal {
@@ -156,6 +166,7 @@
   }
   .auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
   #auth-email-form { display: flex; flex-direction: column; gap: 12px; }
+  .auth-field-hint { font-weight: 400; color: var(--ink-faint); font-size: 11px; }
   .auth-error { color: var(--status-soon); font-size: 12.5px; margin: 0; }
   .auth-modal-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 
@@ -835,6 +846,7 @@
     </div>
     <div class="auth-signed-in" id="auth-signed-in" hidden>
       <span class="auth-email" id="auth-email"></span>
+      <button type="button" class="auth-edit-name-btn" id="auth-edit-username" title="Endre brukernavn" aria-label="Endre brukernavn">✎</button>
       <button type="button" class="auth-btn auth-btn-ghost" id="auth-signout">Logg ut</button>
     </div>
   </div>
@@ -932,6 +944,9 @@
     <button type="button" class="auth-google-btn" id="auth-google-btn">Fortsett med Google</button>
     <div class="auth-divider"><span>eller</span></div>
     <form id="auth-email-form">
+      <label class="field-label full" id="auth-username-label">Brukernavn <span class="auth-field-hint">(kun ved registrering)</span>
+        <input type="text" id="auth-username-input" maxlength="30" placeholder="F.eks. Emil">
+      </label>
       <label class="field-label full">E-post
         <input type="email" id="auth-email-input" required placeholder="deg@epost.no">
       </label>
@@ -2103,8 +2118,10 @@
   var emailForm = document.getElementById("auth-email-form");
   var emailInput = document.getElementById("auth-email-input");
   var passwordInput = document.getElementById("auth-password-input");
+  var usernameInput = document.getElementById("auth-username-input");
   var errorBox = document.getElementById("auth-error");
   var signupBtn = document.getElementById("auth-signup-btn");
+  var editUsernameBtn = document.getElementById("auth-edit-username");
 
   function hideAuthUI() {
     if (authPanel) authPanel.hidden = true;
@@ -2152,7 +2169,8 @@
     "auth/invalid-credential": "Feil e-post eller passord.",
     "auth/user-not-found": "Fant ingen bruker med denne e-postadressen.",
     "auth/too-many-requests": "For mange forsøk. Vent litt og prøv igjen.",
-    "auth/network-request-failed": "Nettverksfeil. Sjekk internettforbindelsen din."
+    "auth/network-request-failed": "Nettverksfeil. Sjekk internettforbindelsen din.",
+    "custom/missing-username": "Skriv inn et brukernavn for å registrere deg."
   };
 
   function showAuthError(err) {
@@ -2216,13 +2234,41 @@
       clearAuthError();
       var email = emailInput ? emailInput.value.trim() : "";
       var password = passwordInput ? passwordInput.value : "";
+      var username = usernameInput ? usernameInput.value.trim() : "";
+      if (!username) {
+        showAuthError({ code: "custom/missing-username" });
+        return;
+      }
       if (!email || password.length < 6) {
         showAuthError({ code: "auth/weak-password" });
         return;
       }
-      authMod.createUserWithEmailAndPassword(fbAuth, email, password).then(function () {
+      authMod.createUserWithEmailAndPassword(fbAuth, email, password).then(function (cred) {
+        // Lagre brukernavnet på selve Firebase-kontoen (displayName) — dette følger
+        // brukeren automatisk på tvers av alle enheter de logger inn på, uten at vi
+        // trenger å lagre det separat noe sted selv.
+        return authMod.updateProfile(cred.user, { displayName: username }).then(function () {
+          if (emailLabel) emailLabel.textContent = username;
+        });
+      }).then(function () {
         closeModal();
       }).catch(showAuthError);
+    });
+  }
+
+  if (editUsernameBtn) {
+    editUsernameBtn.addEventListener("click", function () {
+      var current = fbAuth.currentUser;
+      if (!current) return;
+      var next = window.prompt("Skriv inn nytt brukernavn:", current.displayName || "");
+      if (next === null) return; // avbrutt
+      next = next.trim().slice(0, 30);
+      if (!next) return;
+      authMod.updateProfile(current, { displayName: next }).then(function () {
+        if (emailLabel) emailLabel.textContent = next;
+      }).catch(function () {
+        // Stille feil — brukernavnet forblir uendret lokalt, kan prøves igjen.
+      });
     });
   }
 
@@ -2332,7 +2378,10 @@
       currentUid = user.uid;
       if (signedOutBox) signedOutBox.hidden = true;
       if (signedInBox) signedInBox.hidden = false;
-      if (emailLabel) emailLabel.textContent = user.email || "";
+      // Vis brukernavn (Google-navn eller det man valgte ved registrering) i
+      // stedet for e-postadressen, hvis vi har det — fall tilbake til e-post
+      // for eldre kontoer som ble opprettet før dette feltet fantes.
+      if (emailLabel) emailLabel.textContent = user.displayName || user.email || "";
       if (window.InternshipradarBridge) {
         window.InternshipradarBridge.onChange = debouncedPush;
       }
