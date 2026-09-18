@@ -766,6 +766,13 @@
     color: var(--ink-faint);
     text-align: center;
   }
+  .footnote.disclaimer {
+    margin-top: 8px;
+    max-width: 62ch;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+  }
 
   .landing[hidden] { display: none; }
 
@@ -913,6 +920,7 @@
   </div>
 
   <p class="footnote">Internships hentes fra en delt liste som oppdateres automatisk hver dag. Logg inn for å synkronisere din status og dine notater på tvers av enheter, eller bruk appen uten bruker — da lagres alt kun på denne enheten.</p>
+  <p class="footnote disclaimer">Internshipradar er en uavhengig, studentdrevet oversikt og er ikke tilknyttet eller godkjent av selskapene som er listet. Informasjonen er hentet fra offentlig tilgjengelige kilder og kan være utdatert eller unøyaktig — sjekk alltid den originale utlysningen (lenken "Se utlysning") for oppdaterte og fullstendige detaljer før du søker.</p>
   </div>
 </div>
 
@@ -1388,8 +1396,32 @@
   var overlay = loadOverlay();
   var manualItems = loadManual();
 
+  // Kun http/https-lenker er trygge å bruke som href eller lagre — dette hindrer
+  // at noen (utilsiktet eller med vilje) lagrer f.eks. "javascript:…" i URL-feltet
+  // på "legg til internship"-skjemaet, som ellers ville kjørt som script ved klikk
+  // (og kunne synkronisert til andre innloggede enheter via Firestore).
+  function isSafeUrl(url) {
+    if (!url || typeof url !== "string") return false;
+    try {
+      var parsed = new URL(url, location.href);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Fyller inn trygge standardverdier for felt som MÅ finnes for at appen skal
+  // kunne sortere/rendre et element uten å krasje — dette er et sikkerhetsnett i
+  // tilfelle en fremtidig oppføring i data.json (lagt til av den daglige,
+  // automatiske researchen) mangler eller har feil type på et felt.
   function normalize(it) {
-    return Object.assign({ myStatus: "ny", notes: "", manual: false, favorite: false }, it);
+    var base = Object.assign({ myStatus: "ny", notes: "", manual: false, favorite: false }, it);
+    if (typeof base.title !== "string") base.title = base.title ? String(base.title) : "Uten tittel";
+    if (typeof base.company !== "string") base.company = base.company ? String(base.company) : "Ukjent selskap";
+    if (typeof base.location !== "string") base.location = base.location ? String(base.location) : "";
+    if (typeof base.description !== "string") base.description = base.description ? String(base.description) : "";
+    if (typeof base.field !== "string" || FIELD_OPTIONS.indexOf(base.field) === -1) base.field = "Annet";
+    return base;
   }
 
   function applyOverlay(items) {
@@ -1446,15 +1478,21 @@
     });
   })();
 
+  // Et ugyldig/manglende dato-felt (f.eks. fra en fremtidig automatisk-lagt-til
+  // oppføring med feil format) skal aldri gi NaN som forplanter seg inn i
+  // sortering eller tekst — vi behandler det i stedet som "langt frem i tid" (999
+  // dager), slik at oppføringen havner sist i listen i stedet for å krasje den.
   function daysUntil(dateStr) {
     var today = new Date();
     today.setHours(0, 0, 0, 0);
     var d = new Date(dateStr + "T00:00:00");
+    if (isNaN(d.getTime())) return 999;
     return Math.round((d - today) / 86400000);
   }
 
   function fmtDate(dateStr) {
     var d = new Date(dateStr + "T00:00:00");
+    if (isNaN(d.getTime())) return "Ukjent dato";
     return d.toLocaleDateString("nb-NO", { day: "numeric", month: "short", year: "numeric" });
   }
 
@@ -1661,7 +1699,7 @@
     shareBtn.setAttribute("aria-label", "Del internship");
     shareBtn.textContent = "↗";
     shareBtn.addEventListener("click", function () {
-      var shareUrl = item.url || location.href;
+      var shareUrl = isSafeUrl(item.url) ? item.url : location.href;
       var shareData = { title: item.title + " – " + item.company, text: item.title + " hos " + item.company, url: shareUrl };
       if (navigator.share) {
         navigator.share(shareData).catch(function () {});
@@ -1675,7 +1713,7 @@
     });
     right.appendChild(shareBtn);
 
-    if (item.url) {
+    if (isSafeUrl(item.url)) {
       var a = document.createElement("a");
       a.className = "apply";
       a.href = item.url;
@@ -1893,6 +1931,7 @@
     var title = document.getElementById("f-title").value.trim();
     if (!company || !title) return;
     var opensVal = document.getElementById("f-opens").value;
+    var rawUrl = document.getElementById("f-url").value.trim();
     var item = {
       id: slugify(company, title),
       title: title,
@@ -1900,7 +1939,7 @@
       location: document.getElementById("f-location").value.trim(),
       field: document.getElementById("f-field").value,
       deadline: document.getElementById("f-deadline").value,
-      url: document.getElementById("f-url").value.trim(),
+      url: isSafeUrl(rawUrl) ? rawUrl : "",
       description: document.getElementById("f-desc").value.trim(),
       source: "Lagt til av deg",
       myStatus: "aktuell",
@@ -1948,9 +1987,20 @@
     els.notifyToggle.textContent = on ? "🔔 Varsler på" : "🔔 Varsle meg om frister";
   }
 
+  // Lokal kalenderdato (ikke UTC) — appen er laget for norske brukere, og
+  // toISOString() ville brukt UTC-datoen, som kan avvike fra lokal dato med
+  // 1-2 timer rundt midnatt og gi dobbel eller manglende varsling samme dag.
+  function localDateKey(d) {
+    d = d || new Date();
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + day;
+  }
+
   function checkDeadlineNotifications() {
     if (!window.Notification || Notification.permission !== "granted" || !notifyEnabled()) return;
-    var todayKey = new Date().toISOString().slice(0, 10);
+    var todayKey = localDateKey();
     var notified = loadNotified();
     state.items.forEach(function (it) {
       var days = daysUntil(it.deadline);
@@ -1992,8 +2042,13 @@
   function reloadItems() {
     fetchRemoteItems().then(function (remote) {
       state.items = applyOverlay(remote).concat(manualItems);
-      render();
-      checkDeadlineNotifications();
+      try {
+        render();
+        checkDeadlineNotifications();
+      } catch (e) {
+        // Et uventet feilformatert felt et sted skal aldri kunne blanke hele
+        // listen for alle besøkende — behold det som allerede ble rendret sist.
+      }
     });
   }
 
@@ -2001,6 +2056,10 @@
     renderFieldFilters();
     renderSortSelect();
     reloadItems();
+    // Sjekk fristvarsler på nytt jevnlig mens fanen står åpen — uten dette ville
+    // en bruker som lar siden ligge åpen i bakgrunnen aldri få varsel om at en
+    // frist har kommet innenfor 3-dagersvinduet før de laster siden på nytt.
+    setInterval(checkDeadlineNotifications, 30 * 60 * 1000);
   }
 
   // Liten bro slik at det valgfrie innloggings-scriptet (i en egen <script type="module">
@@ -2169,12 +2228,24 @@
 
   if (signOutBtn) {
     signOutBtn.addEventListener("click", function () {
+      // Lagre eventuelle endringer (f.eks. en favoritt-merking) som ennå ikke har
+      // rukket å bli skrevet til skyen, FØR vi faktisk logger ut — ellers kan en
+      // endring som skjer rett før utlogging gå tapt.
+      flushPendingPush();
       authMod.signOut(fbAuth);
     });
   }
 
   var currentUid = null;
   var pushTimer = null;
+
+  function flushPendingPush() {
+    if (pushTimer) {
+      clearTimeout(pushTimer);
+      pushTimer = null;
+      pushToFirestore();
+    }
+  }
 
   function debouncedPush() {
     if (!currentUid) return;
@@ -2198,15 +2269,48 @@
     });
   }
 
+  // Slår sammen lokal og sky-data uten å noensinne slette noe stille: hvis
+  // brukeren har brukt appen uinnlogget på denne enheten (favoritter, notater,
+  // egne lagt-til internships) og logger inn på en konto som allerede har annen
+  // data fra en annen enhet, skal begge deler bevares — ikke overskrives.
+  // Ved konflikt (samme id begge steder) vinner den lokale versjonen, siden det
+  // er den brukeren nettopp så på/endret på denne enheten.
+  function mergeState(localOverlay, localManual, remoteOverlay, remoteManual) {
+    var mergedOverlay = {};
+    var k;
+    for (k in (remoteOverlay || {})) {
+      if (Object.prototype.hasOwnProperty.call(remoteOverlay, k)) mergedOverlay[k] = remoteOverlay[k];
+    }
+    for (k in (localOverlay || {})) {
+      if (Object.prototype.hasOwnProperty.call(localOverlay, k)) mergedOverlay[k] = localOverlay[k];
+    }
+
+    var manualById = {};
+    (remoteManual || []).forEach(function (item) { if (item && item.id) manualById[item.id] = item; });
+    (localManual || []).forEach(function (item) { if (item && item.id) manualById[item.id] = item; });
+    var mergedManual = Object.keys(manualById).map(function (id) { return manualById[id]; });
+
+    return { overlay: mergedOverlay, manualItems: mergedManual };
+  }
+
   function loadFromFirestoreAndMerge(uid) {
     var ref = fsMod.doc(fbDb, "users", uid);
+    var localBefore = window.InternshipradarBridge
+      ? window.InternshipradarBridge.getState()
+      : { overlay: {}, manualItems: [] };
     fsMod.getDoc(ref).then(function (snap) {
       if (snap.exists()) {
         var data = snap.data();
+        var merged = mergeState(localBefore.overlay, localBefore.manualItems, data.overlay || {}, data.manualItems || []);
         if (window.InternshipradarBridge) {
-          window.InternshipradarBridge.setState(data.overlay || {}, data.manualItems || []);
+          window.InternshipradarBridge.setState(merged.overlay, merged.manualItems);
           window.InternshipradarBridge.reload();
         }
+        // Skriv umiddelbart den sammenslåtte tilstanden tilbake til skyen, slik at
+        // sammenslåingen selv blir den nye, autoritative versjonen med en gang —
+        // dette lukker også et lite tidsvindu der en endring rett etter innlogging
+        // (før denne sammenslåingen er ferdig) ellers kunne blitt overskrevet.
+        pushToFirestore();
       } else {
         // Ingen data i skyen ennå for denne brukeren — last opp det som finnes lokalt.
         pushToFirestore();
@@ -2215,6 +2319,13 @@
       // Kunne ikke hente skydata — fortsett med lokal data.
     });
   }
+
+  // Ekstra sikkerhet: hvis fanen lukkes eller man navigerer bort mens en endring
+  // fortsatt venter på å bli skrevet til skyen, prøv å sende den med en gang.
+  window.addEventListener("pagehide", flushPendingPush);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") flushPendingPush();
+  });
 
   authMod.onAuthStateChanged(fbAuth, function (user) {
     if (user) {
