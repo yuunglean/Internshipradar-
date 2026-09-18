@@ -64,6 +64,7 @@
   header.top { margin-bottom: 34px; }
 
   .auth-panel { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+  .auth-signed-out[hidden], .auth-signed-in[hidden] { display: none; }
   .auth-signed-in { display: flex; align-items: center; gap: 10px; }
   .auth-email {
     font-size: 12px;
@@ -821,6 +822,16 @@
 </head>
 <body>
 <div class="wrap">
+  <div class="auth-panel" id="auth-panel">
+    <div class="auth-signed-out" id="auth-signed-out">
+      <button type="button" class="auth-btn" id="auth-open-login">Logg inn / Registrer</button>
+    </div>
+    <div class="auth-signed-in" id="auth-signed-in" hidden>
+      <span class="auth-email" id="auth-email"></span>
+      <button type="button" class="auth-btn auth-btn-ghost" id="auth-signout">Logg ut</button>
+    </div>
+  </div>
+
   <div class="landing" id="landing">
     <p class="eyebrow">Næringsliv · karriereradar</p>
     <h1>Internshipradar</h1>
@@ -831,15 +842,6 @@
 
   <div id="app-view" hidden>
   <header class="top">
-    <div class="auth-panel" id="auth-panel">
-      <div class="auth-signed-out" id="auth-signed-out">
-        <button type="button" class="auth-btn" id="auth-open-login">Logg inn / Registrer</button>
-      </div>
-      <div class="auth-signed-in" id="auth-signed-in" hidden>
-        <span class="auth-email" id="auth-email"></span>
-        <button type="button" class="auth-btn auth-btn-ghost" id="auth-signout">Logg ut</button>
-      </div>
-    </div>
     <p class="eyebrow">Næringsliv · karriereradar</p>
     <h1>Internshipradar</h1>
     <div class="stats" id="stats"></div>
