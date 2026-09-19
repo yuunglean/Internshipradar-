@@ -98,6 +98,7 @@
     cursor: pointer;
     flex: none;
   }
+  .site-nav-logo { display: block; object-fit: contain; }
   .site-nav-links {
     display: none;
     align-items: center;
@@ -318,11 +319,17 @@
     background: none;
     border: none;
     color: var(--ink-soft);
-    font-size: 15px;
+    font-size: 16px;
     cursor: pointer;
-    padding: 2px 4px;
+    padding: 0;
     line-height: 1;
     border-radius: 999px;
+    width: 32px;
+    height: 32px;
+    margin: -6px -6px -6px 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .ios-tip button:hover { color: var(--ink); }
   .ios-tip .share-glyph {
@@ -1052,11 +1059,7 @@
 <nav class="site-nav" id="site-nav">
   <div class="site-nav-inner">
     <div class="site-nav-brand" id="site-nav-brand">
-      <svg width="22" height="22" viewBox="0 0 26 26" aria-hidden="true">
-        <circle cx="13" cy="13" r="11.5" fill="none" stroke="var(--accent)" stroke-width="1.6" opacity="0.5"></circle>
-        <circle cx="13" cy="13" r="7" fill="none" stroke="var(--accent)" stroke-width="1.6" opacity="0.8"></circle>
-        <circle cx="13" cy="13" r="2.2" fill="var(--accent)"></circle>
-      </svg>
+      <img src="logo-mark.png" width="22" height="22" alt="" class="site-nav-logo">
       <span>Internshipradar</span>
     </div>
     <div class="site-nav-links">
@@ -1117,7 +1120,7 @@
   <div id="app-view" hidden>
   <header class="top">
     <p class="eyebrow">Næringsliv · karriereradar</p>
-    <h1>Internshipradar</h1>
+    <h1 id="app-heading">Internshipradar</h1>
     <div class="stats" id="stats"></div>
     <details class="stats-panel" id="stats-panel">
       <summary>Vis statistikk</summary>
@@ -1570,7 +1573,13 @@
     query: "",
     sortBy: "deadline",
     favOnly: false,
-    soonOnly: false
+    soonOnly: false,
+    // Hvilken av de tre "sidene" fra toppmenyen (Oversikt / Mine internships
+    // / Frister) brukeren sist gikk til herfra — styrer kun overskriften i
+    // appen og om sorteringsvelgeren vises, ikke selve filtreringen (den
+    // styres av sortBy/favOnly/soonOnly som før). null = ingen av de tre
+    // (f.eks. rett inn via lenke, eller favoritter-filteret).
+    page: null
   };
 
   var SORT_OPTIONS = [
@@ -1605,7 +1614,8 @@
     heroPillSoon: document.getElementById("hero-pill-soon"),
     heroOpenCount: document.getElementById("hero-open-count"),
     heroPillOpenCount: document.getElementById("hero-pill-open-count"),
-    heroPillSoonCount: document.getElementById("hero-pill-soon-count")
+    heroPillSoonCount: document.getElementById("hero-pill-soon-count"),
+    appHeading: document.getElementById("app-heading")
   };
 
   function showLanding() {
@@ -1622,6 +1632,9 @@
   els.landingCta.addEventListener("click", function () {
     state.favOnly = false;
     state.soonOnly = false;
+    state.page = "oversikt";
+    state.query = "";
+    if (els.search) els.search.value = "";
     if (els.favFilterBtn) els.favFilterBtn.setAttribute("aria-pressed", "false");
     showApp();
     render();
@@ -1646,6 +1659,9 @@
     els.heroPillFav.addEventListener("click", function () {
       state.favOnly = true;
       state.soonOnly = false;
+      state.page = null;
+      state.query = "";
+      if (els.search) els.search.value = "";
       els.favFilterBtn.setAttribute("aria-pressed", "true");
       showApp();
       render();
@@ -1657,6 +1673,9 @@
     els.heroPillSoon.addEventListener("click", function () {
       state.soonOnly = true;
       state.favOnly = false;
+      state.page = "frister";
+      state.query = "";
+      if (els.search) els.search.value = "";
       if (els.favFilterBtn) els.favFilterBtn.setAttribute("aria-pressed", "false");
       showApp();
       render();
@@ -1679,11 +1698,14 @@
       var nav = el.getAttribute("data-nav");
       state.favOnly = false;
       state.soonOnly = false;
+      state.query = "";
+      if (els.search) els.search.value = "";
       if (els.favFilterBtn) els.favFilterBtn.setAttribute("aria-pressed", "false");
 
       if (nav === "own") {
         state.sortBy = "own";
         if (els.sortSelect) els.sortSelect.value = state.sortBy;
+        state.page = "own";
       } else if (nav === "deadline") {
         // "Frister" i toppmenyen skal oppføre seg som "frister denne uken"-
         // pillen på forsiden: vise KUN internships med søknadsfrist innen 7
@@ -1691,12 +1713,14 @@
         state.sortBy = "deadline";
         if (els.sortSelect) els.sortSelect.value = state.sortBy;
         state.soonOnly = true;
+        state.page = "frister";
       } else {
         // "Oversikt" nullstiller alltid til standardvisningen (hele listen,
         // sortert på nærmeste frist) — uansett hvilken sortering/filter som
         // var aktiv fra før (f.eks. etter "Mine internships").
         state.sortBy = "deadline";
         if (els.sortSelect) els.sortSelect.value = state.sortBy;
+        state.page = "oversikt";
       }
 
       showApp();
@@ -1930,6 +1954,12 @@
     els.sortSelect.value = state.sortBy;
     els.sortSelect.addEventListener("change", function () {
       state.sortBy = els.sortSelect.value;
+      // Holder sidetittelen konsistent med hva man faktisk valgte i
+      // sorteringsvelgeren også når den byttes manuelt (ikke bare via
+      // toppmenyen/hero-pillene).
+      if (state.sortBy === "own") state.page = "own";
+      else if (state.sortBy === "deadline") state.page = "oversikt";
+      else state.page = null;
       render();
     });
   }
@@ -2138,6 +2168,13 @@
       pool = state.items
         .filter(function (it) { return it.manual; })
         .sort(function (a, b) { return compareItems(a, b, false); });
+    } else if (!showExpired && state.query) {
+      // Et aktivt søk skal finne selskapet uansett om søknadsfristen har
+      // passert eller ikke — ellers "forsvinner" et selskap fullstendig fra
+      // søket bare fordi fristen gikk ut, noe som ser ut som en feil i
+      // søkefunksjonen. "Sorter: Utløpte frister" er fortsatt sitt eget,
+      // bevisste filter og påvirkes ikke av dette.
+      pool = state.items.slice().sort(function (a, b) { return compareItems(a, b, false); });
     } else {
       pool = showExpired ? closed : open;
     }
@@ -2157,6 +2194,7 @@
     updateFieldFilterStates();
     updateLandingCount(open.length);
     updateHeroStats(open);
+    updateAppHeading();
     renderStatsBreakdown();
     observeCards();
   }
@@ -2237,6 +2275,21 @@
 
     var soonThisWeek = open.filter(function (it) { return daysUntil(it.deadline) <= 7; }).length;
     if (els.heroPillSoonCount) els.heroPillSoonCount.textContent = String(soonThisWeek);
+  }
+
+  // "Oversikt", "Mine internships" og "Frister" er hver sin egen "side" —
+  // overskriften i appen viser hvilken av dem du er på, og siden "Frister"
+  // alltid betyr "denne uken" gir det ikke mening å kunne bytte sortering
+  // der, så sorteringsvelgeren skjules kun på den siden.
+  function updateAppHeading() {
+    if (els.appHeading) {
+      var text = "Internshipradar";
+      if (state.page === "oversikt") text = "Oversikt";
+      else if (state.page === "own") text = "Mine internships";
+      else if (state.page === "frister") text = "Frister";
+      els.appHeading.textContent = text;
+    }
+    if (els.sortSelect) els.sortSelect.hidden = state.page === "frister";
   }
 
   var prefersReducedMotion = (function () {
