@@ -2188,12 +2188,26 @@
     visible.forEach(function (it) { els.list.appendChild(cardNode(it)); });
     els.empty.hidden = visible.length !== 0;
 
-    var soon = open.filter(function (it) { return daysUntil(it.deadline) <= 14; }).length;
     els.stats.innerHTML = "";
-    addStat(String(open.length), "åpne nå", false);
-    addStat(String(soon), "frist innen 14 dager", true);
-    var applied = state.items.filter(function (it) { return it.myStatus === "søkt"; }).length;
-    addStat(String(applied), "søkt på", false);
+    if (state.page === "frister") {
+      var soonItems = open.filter(function (it) { return daysUntil(it.deadline) <= 7; });
+      var soonApplied = soonItems.filter(function (it) { return it.myStatus === "søkt"; }).length;
+      addStat(String(soonItems.length), "med frist denne uken", true);
+      addStat(String(soonApplied), "søkt på", false);
+    } else if (state.page === "own") {
+      var ownOpen = state.items.filter(function (it) { return it.manual && daysUntil(it.deadline) >= 0; });
+      var ownSoon = ownOpen.filter(function (it) { return daysUntil(it.deadline) <= 14; }).length;
+      var appliedOwn = state.items.filter(function (it) { return it.myStatus === "søkt"; }).length;
+      addStat(String(ownOpen.length), "åpne nå", false);
+      addStat(String(ownSoon), "frist innen 14 dager", true);
+      addStat(String(appliedOwn), "søkt på", false);
+    } else {
+      var soon = open.filter(function (it) { return daysUntil(it.deadline) <= 14; }).length;
+      var applied = state.items.filter(function (it) { return it.myStatus === "søkt"; }).length;
+      addStat(String(open.length), "åpne nå", false);
+      addStat(String(soon), "frist innen 14 dager", true);
+      addStat(String(applied), "søkt på", false);
+    }
 
     updateFieldFilterStates();
     updateLandingCount(open.length);
