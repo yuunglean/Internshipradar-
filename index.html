@@ -920,8 +920,6 @@
       left: 50%;
       transform: translate(-50%, -50%);
     }
-    .hero-stat-chip { position: absolute; top: 4px; left: 0; }
-    .hero-companies { position: absolute; right: 0; bottom: 8px; width: 290px; }
   }
 
   .landing-sub {
@@ -1041,69 +1039,6 @@
     .hero-radar-sweep { animation: none; }
   }
 
-  .hero-stat-chip {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    padding: 10px 16px;
-    border-radius: 12px;
-    border: 1px solid var(--line-strong);
-    background: var(--surface-raised);
-  }
-  .hero-stat-chip .n { font-size: 20px; font-weight: 700; color: var(--ink); }
-  .hero-stat-chip .l {
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 10.5px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-  }
-
-  .hero-companies {
-    width: 100%;
-    max-width: 340px;
-    padding: 16px;
-    border-radius: 16px;
-    border: 1px solid var(--line-strong);
-    background: var(--surface-raised);
-  }
-  .hero-companies-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-  }
-  .hero-companies-head .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
-  }
-  .hero-companies-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-  .hero-companies-grid span {
-    padding: 9px 8px;
-    border-radius: 9px;
-    border: 1px solid var(--line);
-    background: var(--surface);
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--ink);
-    text-align: center;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
 
   @media (max-width: 480px) {
     .card-top { flex-direction: column; }
@@ -1128,7 +1063,6 @@
       <span data-nav="overview">Oversikt</span>
       <span data-nav="own">Mine internships</span>
       <span data-nav="deadline">Frister</span>
-      <span class="site-nav-static" title="Kommer snart">Om oss</span>
     </div>
     <div class="auth-panel" id="auth-panel">
       <div class="auth-signed-out" id="auth-signed-out">
@@ -1147,7 +1081,7 @@
   <div class="landing" id="landing">
    <div class="landing-copy">
     <p class="eyebrow">Business · Økonomi · Finance</p>
-    <h1>Finn ditt neste internship først.</h1>
+    <h1>Finn ditt neste internship</h1>
     <p class="landing-sub"><span id="hero-open-count">–</span> aktive internships og traineeprogram innen business og økonomi i Norge — samlet automatisk og oppdatert hver dag.</p>
 
     <form class="hero-search" id="hero-search-form">
@@ -1176,19 +1110,6 @@
         <circle cx="145" cy="158" r="3.5" fill="var(--accent)" opacity="0.75"></circle>
         <circle cx="83" cy="72" r="3.5" fill="var(--gold)" opacity="0.75"></circle>
       </svg>
-
-      <div class="hero-stat-chip">
-        <span class="n" id="hero-company-count">–</span>
-        <span class="l">bedrifter sporet</span>
-      </div>
-
-      <div class="hero-companies">
-        <div class="hero-companies-head">
-          <span>Bedrifter i oversikten</span>
-          <span class="dot"></span>
-        </div>
-        <div class="hero-companies-grid" id="hero-companies-grid"></div>
-      </div>
     </div>
   </div>
 
@@ -1648,7 +1569,8 @@
     activeField: "Alle",
     query: "",
     sortBy: "deadline",
-    favOnly: false
+    favOnly: false,
+    soonOnly: false
   };
 
   var SORT_OPTIONS = [
@@ -1683,9 +1605,7 @@
     heroPillSoon: document.getElementById("hero-pill-soon"),
     heroOpenCount: document.getElementById("hero-open-count"),
     heroPillOpenCount: document.getElementById("hero-pill-open-count"),
-    heroPillSoonCount: document.getElementById("hero-pill-soon-count"),
-    heroCompanyCount: document.getElementById("hero-company-count"),
-    heroCompaniesGrid: document.getElementById("hero-companies-grid")
+    heroPillSoonCount: document.getElementById("hero-pill-soon-count")
   };
 
   function showLanding() {
@@ -1700,7 +1620,11 @@
   }
 
   els.landingCta.addEventListener("click", function () {
+    state.favOnly = false;
+    state.soonOnly = false;
+    if (els.favFilterBtn) els.favFilterBtn.setAttribute("aria-pressed", "false");
     showApp();
+    render();
     try { history.pushState({ view: "internships" }, "", "#internships"); } catch (e) {}
   });
 
@@ -1721,6 +1645,7 @@
   if (els.heroPillFav) {
     els.heroPillFav.addEventListener("click", function () {
       state.favOnly = true;
+      state.soonOnly = false;
       els.favFilterBtn.setAttribute("aria-pressed", "true");
       showApp();
       render();
@@ -1730,6 +1655,9 @@
 
   if (els.heroPillSoon) {
     els.heroPillSoon.addEventListener("click", function () {
+      state.soonOnly = true;
+      state.favOnly = false;
+      if (els.favFilterBtn) els.favFilterBtn.setAttribute("aria-pressed", "false");
       showApp();
       render();
       try { history.pushState({ view: "internships" }, "", "#internships"); } catch (e) {}
@@ -1749,6 +1677,9 @@
   document.querySelectorAll(".site-nav-links [data-nav]").forEach(function (el) {
     el.addEventListener("click", function () {
       var nav = el.getAttribute("data-nav");
+      state.favOnly = false;
+      state.soonOnly = false;
+      if (els.favFilterBtn) els.favFilterBtn.setAttribute("aria-pressed", "false");
       if (nav === "own" || nav === "deadline") {
         state.sortBy = nav === "own" ? "own" : "deadline";
         if (els.sortSelect) els.sortSelect.value = state.sortBy;
@@ -2000,6 +1931,12 @@
 
   function matches(item) {
     if (state.favOnly && !item.favorite) return false;
+    // "Frister denne uken" (satt via hero-pillen på forsiden) viser kun
+    // internships med søknadsfrist innen de neste 7 dagene, fra i dag.
+    if (state.soonOnly) {
+      var d = daysUntil(item.deadline);
+      if (d < 0 || d > 7) return false;
+    }
     if (state.activeField !== "Alle" && item.field !== state.activeField) return false;
     if (state.query) {
       var q = state.query.toLowerCase();
@@ -2276,31 +2213,15 @@
     }
   }
 
-  // Holder tallene og bedriftsutvalget i hero-seksjonen på forsiden i sync med
-  // hvor mange internships (og bedrifter) som faktisk ligger i state.items —
-  // ingen av tallene her er hardkodet.
+  // Holder tallene i hero-seksjonen på forsiden i sync med hvor mange
+  // internships som faktisk ligger i state.items — ingen av tallene her er
+  // hardkodet.
   function updateHeroStats(open) {
     if (els.heroOpenCount) els.heroOpenCount.textContent = String(open.length);
     if (els.heroPillOpenCount) els.heroPillOpenCount.textContent = String(open.length);
 
     var soonThisWeek = open.filter(function (it) { return daysUntil(it.deadline) <= 7; }).length;
     if (els.heroPillSoonCount) els.heroPillSoonCount.textContent = String(soonThisWeek);
-
-    var companies = [];
-    state.items.forEach(function (it) {
-      if (it.company && companies.indexOf(it.company) === -1) companies.push(it.company);
-    });
-    if (els.heroCompanyCount) els.heroCompanyCount.textContent = String(companies.length);
-
-    if (els.heroCompaniesGrid) {
-      els.heroCompaniesGrid.innerHTML = "";
-      companies.slice(0, 6).forEach(function (name) {
-        var span = document.createElement("span");
-        span.textContent = name;
-        span.title = name;
-        els.heroCompaniesGrid.appendChild(span);
-      });
-    }
   }
 
   var prefersReducedMotion = (function () {
