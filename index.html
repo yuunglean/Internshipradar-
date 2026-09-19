@@ -1624,9 +1624,24 @@
     appHeading: document.getElementById("app-heading")
   };
 
+  // Å gå tilbake til forsiden (via logoen, "tilbake"-knappen i nettleseren,
+  // eller ved første sidelasting) skal alltid være et "blankt ark" — ellers
+  // henger f.eks. soonOnly ("frister denne uken") igjen fra forrige side, og
+  // et påfølgende søk fra forsiden blir da uventet begrenset til det gamle
+  // filteret i stedet for å søke i alt.
   function showLanding() {
     els.landing.hidden = false;
     els.appView.hidden = true;
+    state.favOnly = false;
+    state.soonOnly = false;
+    state.query = "";
+    state.page = null;
+    state.sortBy = "deadline";
+    if (els.search) els.search.value = "";
+    if (els.heroSearchInput) els.heroSearchInput.value = "";
+    if (els.favFilterBtn) els.favFilterBtn.setAttribute("aria-pressed", "false");
+    if (els.sortSelect) els.sortSelect.value = state.sortBy;
+    render();
   }
 
   function showApp() {
@@ -1665,7 +1680,7 @@
     els.heroPillFav.addEventListener("click", function () {
       state.favOnly = true;
       state.soonOnly = false;
-      state.page = null;
+      state.page = "oversikt";
       state.query = "";
       if (els.search) els.search.value = "";
       els.favFilterBtn.setAttribute("aria-pressed", "true");
