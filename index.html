@@ -101,6 +101,18 @@
   .auth-edit-name-btn:hover { color: var(--accent); }
 
   .auth-modal[hidden] { display: none; }
+  #auth-username-label[hidden], #auth-password-confirm-label[hidden] { display: none; }
+  #auth-email-form input[type="text"],
+  #auth-email-form input[type="email"],
+  #auth-email-form input[type="password"] { color: #ffffff; caret-color: #ffffff; }
+  #auth-email-form input:-webkit-autofill,
+  #auth-email-form input:-webkit-autofill:hover,
+  #auth-email-form input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #ffffff;
+    -webkit-box-shadow: 0 0 0px 1000px var(--surface-raised) inset;
+    box-shadow: 0 0 0px 1000px var(--surface-raised) inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
   .auth-modal {
     position: fixed;
     inset: 0;
@@ -671,18 +683,6 @@
   }
   textarea.notes:focus-visible { border-color: var(--accent); }
 
-  details.closed-wrap {
-    margin-top: 22px;
-  }
-  details.closed-wrap summary {
-    cursor: pointer;
-    font-size: 13px;
-    color: var(--ink-faint);
-    font-weight: 500;
-    padding: 8px 0;
-  }
-  details.closed-wrap .list { margin-top: 10px; opacity: 0.72; }
-
   .empty {
     text-align: center;
     color: var(--ink-faint);
@@ -730,18 +730,45 @@
     font-weight: 600;
   }
 
-  input[type="text"], input[type="date"], input[type="url"], select.form-input {
+  input[type="text"], input[type="date"], input[type="url"], input[type="email"],
+  input[type="password"], select.form-input {
     font: inherit;
     font-size: 13.5px;
-    padding: 9px 11px;
+    padding: 11px 13px;
     border-radius: 10px;
     border: 1px solid var(--line-strong);
     background: var(--surface-raised);
     color: var(--ink);
+    width: 100%;
     transition: border-color 0.15s ease;
   }
   input[type="text"]:focus-visible, input[type="date"]:focus-visible,
-  input[type="url"]:focus-visible, select.form-input:focus-visible { border-color: var(--accent); }
+  input[type="url"]:focus-visible, input[type="email"]:focus-visible,
+  input[type="password"]:focus-visible, select.form-input:focus-visible { border-color: var(--accent); }
+
+  input[type="text"]::placeholder, input[type="date"]::placeholder,
+  input[type="url"]::placeholder, input[type="email"]::placeholder,
+  input[type="password"]::placeholder {
+    color: rgba(255, 255, 255, 0.55);
+    opacity: 1;
+  }
+
+  .password-input-wrap { position: relative; display: flex; }
+  .password-input-wrap input { padding-right: 40px; }
+  .toggle-password-btn {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    padding: 6px 8px;
+    color: var(--ink-faint);
+    line-height: 1;
+  }
+  .toggle-password-btn:hover { color: var(--ink); }
 
   .form-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
@@ -885,11 +912,6 @@
   <div class="list" id="list"></div>
   <div class="empty" id="empty" hidden>Ingen treff. Prøv et annet søk eller filter.</div>
 
-  <details class="closed-wrap" id="closed-wrap" hidden>
-    <summary>Utløpte frister (<span id="closed-count">0</span>)</summary>
-    <div class="list" id="closed-list"></div>
-  </details>
-
   <div class="add-section">
     <button class="add-toggle" id="add-toggle" type="button">+ Legg til internship</button>
     <form class="add-form" id="add-form">
@@ -944,14 +966,23 @@
     <button type="button" class="auth-google-btn" id="auth-google-btn">Fortsett med Google</button>
     <div class="auth-divider"><span>eller</span></div>
     <form id="auth-email-form">
-      <label class="field-label full" id="auth-username-label">Brukernavn <span class="auth-field-hint">(kun ved registrering)</span>
+      <label class="field-label full" id="auth-username-label" hidden>Brukernavn <span class="auth-field-hint">(kun ved registrering)</span>
         <input type="text" id="auth-username-input" maxlength="30" placeholder="F.eks. Emil">
       </label>
       <label class="field-label full">E-post
         <input type="email" id="auth-email-input" required placeholder="deg@epost.no">
       </label>
       <label class="field-label full">Passord
-        <input type="password" id="auth-password-input" required minlength="6" placeholder="Minst 6 tegn">
+        <div class="password-input-wrap">
+          <input type="password" id="auth-password-input" required minlength="6" placeholder="Minst 6 tegn">
+          <button type="button" class="toggle-password-btn" data-for="auth-password-input" aria-label="Vis passord">👁</button>
+        </div>
+      </label>
+      <label class="field-label full" id="auth-password-confirm-label" hidden>Bekreft passord <span class="auth-field-hint">(kun ved registrering)</span>
+        <div class="password-input-wrap">
+          <input type="password" id="auth-password-confirm-input" minlength="6" placeholder="Gjenta passordet">
+          <button type="button" class="toggle-password-btn" data-for="auth-password-confirm-input" aria-label="Vis passord">👁</button>
+        </div>
       </label>
       <p class="auth-error" id="auth-error" hidden></p>
       <div class="auth-modal-actions">
@@ -1312,8 +1343,7 @@
 
   var SORT_OPTIONS = [
     { value: "deadline", label: "Sorter: Frist (nærmest)" },
-    { value: "company", label: "Sorter: Selskap A-Å" },
-    { value: "field", label: "Sorter: Felt A-Å" }
+    { value: "expired", label: "Sorter: Utløpte frister" }
   ];
 
   var els = {
@@ -1327,9 +1357,6 @@
     search: document.getElementById("search"),
     list: document.getElementById("list"),
     empty: document.getElementById("empty"),
-    closedWrap: document.getElementById("closed-wrap"),
-    closedList: document.getElementById("closed-list"),
-    closedCount: document.getElementById("closed-count"),
     addToggle: document.getElementById("add-toggle"),
     addForm: document.getElementById("add-form"),
     iosTip: document.getElementById("ios-tip"),
@@ -1592,12 +1619,6 @@
   });
 
   function compareItems(a, b, closedOrder) {
-    if (state.sortBy === "company") return a.company.localeCompare(b.company, "nb");
-    if (state.sortBy === "field") {
-      var f = a.field.localeCompare(b.field, "nb");
-      if (f !== 0) return f;
-      return closedOrder ? daysUntil(b.deadline) - daysUntil(a.deadline) : daysUntil(a.deadline) - daysUntil(b.deadline);
-    }
     return closedOrder ? daysUntil(b.deadline) - daysUntil(a.deadline) : daysUntil(a.deadline) - daysUntil(b.deadline);
   }
 
@@ -1638,7 +1659,15 @@
     favBtn.setAttribute("aria-pressed", item.favorite ? "true" : "false");
     favBtn.setAttribute("aria-label", item.favorite ? "Fjern fra favoritter" : "Legg til favoritter");
     favBtn.textContent = item.favorite ? "★" : "☆";
+    if (!(window.InternshipradarBridge && window.InternshipradarBridge.loggedIn)) {
+      favBtn.title = "Logg inn for å lagre favoritter";
+    }
     favBtn.addEventListener("click", function () {
+      var loggedIn = !!(window.InternshipradarBridge && window.InternshipradarBridge.loggedIn);
+      if (!loggedIn) {
+        promptLoginForFavorite();
+        return;
+      }
       updateItem(item.id, { favorite: !item.favorite });
     });
 
@@ -1763,21 +1792,15 @@
     open.sort(function (a, b) { return compareItems(a, b, false); });
     closed.sort(function (a, b) { return compareItems(a, b, true); });
 
-    var visibleOpen = open.filter(matches);
-    var visibleClosed = closed.filter(matches);
+    // "Sorter: Utløpte frister" bytter selve listen ut med KUN de utløpte
+    // oppføringene (nyest utløpt først) i stedet for å sortere de åpne — det
+    // finnes ingen egen "utløpte"-seksjon lenger, dette er nå eneste sted de vises.
+    var showExpired = state.sortBy === "expired";
+    var visible = (showExpired ? closed : open).filter(matches);
 
     els.list.innerHTML = "";
-    visibleOpen.forEach(function (it) { els.list.appendChild(cardNode(it)); });
-    els.empty.hidden = visibleOpen.length !== 0;
-
-    if (visibleClosed.length) {
-      els.closedWrap.hidden = false;
-      els.closedCount.textContent = String(visibleClosed.length);
-      els.closedList.innerHTML = "";
-      visibleClosed.forEach(function (it) { els.closedList.appendChild(cardNode(it)); });
-    } else {
-      els.closedWrap.hidden = true;
-    }
+    visible.forEach(function (it) { els.list.appendChild(cardNode(it)); });
+    els.empty.hidden = visible.length !== 0;
 
     var soon = open.filter(function (it) { return daysUntil(it.deadline) <= 14; }).length;
     els.stats.innerHTML = "";
@@ -1903,6 +1926,19 @@
       saveOverlay();
     }
     render();
+  }
+
+  // Favoritter skal kun kunne lagres av innloggede brukere (slik at de faktisk
+  // følger kontoen, ikke bare enheten). Hvis noen klikker stjernen uten å være
+  // innlogget, åpner vi innloggingsvinduet i stedet for å lagre noe lokalt.
+  function promptLoginForFavorite() {
+    var modal = document.getElementById("auth-modal");
+    var errorBox = document.getElementById("auth-error");
+    if (errorBox) {
+      errorBox.textContent = "Logg inn for å lagre favoritter.";
+      errorBox.hidden = false;
+    }
+    if (modal) modal.hidden = false;
   }
 
   function removeItem(id) {
@@ -2067,9 +2103,34 @@
     });
   }
 
+  // Vis/skjul passord-knapper: rent UI, uavhengig av om Firebase-innloggingen
+  // laster eller ikke, så vi setter den opp her i kjerne-scriptet.
+  function setupPasswordToggles() {
+    var btns = document.querySelectorAll(".toggle-password-btn");
+    for (var i = 0; i < btns.length; i++) {
+      (function (btn) {
+        btn.addEventListener("click", function () {
+          var targetId = btn.getAttribute("data-for");
+          var input = targetId ? document.getElementById(targetId) : null;
+          if (!input) return;
+          if (input.type === "password") {
+            input.type = "text";
+            btn.textContent = "🙈";
+            btn.setAttribute("aria-label", "Skjul passord");
+          } else {
+            input.type = "password";
+            btn.textContent = "👁";
+            btn.setAttribute("aria-label", "Vis passord");
+          }
+        });
+      })(btns[i]);
+    }
+  }
+
   function boot() {
     renderFieldFilters();
     renderSortSelect();
+    setupPasswordToggles();
     reloadItems();
     // Sjekk fristvarsler på nytt jevnlig mens fanen står åpen — uten dette ville
     // en bruker som lar siden ligge åpen i bakgrunnen aldri få varsel om at en
@@ -2090,7 +2151,11 @@
       try { localStorage.setItem(MANUAL_KEY, JSON.stringify(manualItems)); } catch (e) {}
     },
     reload: function () { reloadItems(); },
-    onChange: null
+    onChange: null,
+    // Satt av det valgfrie innloggings-scriptet lenger nede (hvis Firebase laster
+    // OK). Står som false som standard, slik at favoritt-knappen krever innlogging
+    // også i tilfeller der Firebase ikke laster i det hele tatt.
+    loggedIn: false
   };
 
   boot();
@@ -2118,9 +2183,13 @@
   var emailForm = document.getElementById("auth-email-form");
   var emailInput = document.getElementById("auth-email-input");
   var passwordInput = document.getElementById("auth-password-input");
+  var passwordConfirmInput = document.getElementById("auth-password-confirm-input");
+  var passwordConfirmLabel = document.getElementById("auth-password-confirm-label");
   var usernameInput = document.getElementById("auth-username-input");
+  var usernameLabel = document.getElementById("auth-username-label");
   var errorBox = document.getElementById("auth-error");
   var signupBtn = document.getElementById("auth-signup-btn");
+  var signupMode = false;
   var editUsernameBtn = document.getElementById("auth-edit-username");
 
   function hideAuthUI() {
@@ -2145,7 +2214,7 @@
   // Generert i Firebase-konsollen: Project Settings → Cloud Messaging →
   // Web Push certificates ("Generer nøkkelpar"). Push-varsler (som kommer selv
   // om siden er lukket) er avslått helt til denne er fylt inn med en ekte nøkkel.
-  var VAPID_KEY = "SETT_INN_DIN_VAPID_NOKKEL_HER";
+  var VAPID_KEY = "BIjG7cMCzLduyeY5QLHfne9w_GEAMYkGTb-Fel9gIhJfzrI06joCtC5cBXJXRToDLoBeWpngEBkuSaLtigoOxhY";
 
   var fbApp, fbAuth, fbDb;
   var appMod, authMod, fsMod;
@@ -2240,7 +2309,8 @@
     "auth/user-not-found": "Fant ingen bruker med denne e-postadressen.",
     "auth/too-many-requests": "For mange forsøk. Vent litt og prøv igjen.",
     "auth/network-request-failed": "Nettverksfeil. Sjekk internettforbindelsen din.",
-    "custom/missing-username": "Skriv inn et brukernavn for å registrere deg."
+    "custom/missing-username": "Skriv inn et brukernavn for å registrere deg.",
+    "custom/password-mismatch": "Passordene er ikke like."
   };
 
   function showAuthError(err) {
@@ -2257,8 +2327,19 @@
     errorBox.textContent = "";
   }
 
+  // "Registrer ny bruker" er et to-stegs klikk: første klikk bytter modalen om
+  // til registreringsmodus (viser brukernavn + bekreft passord), andre klikk
+  // utfører selve registreringen. Innlogging trenger aldri disse feltene.
+  function setSignupMode(on) {
+    signupMode = on;
+    if (usernameLabel) usernameLabel.hidden = !on;
+    if (passwordConfirmLabel) passwordConfirmLabel.hidden = !on;
+    if (signupBtn) signupBtn.textContent = on ? "Opprett bruker" : "Registrer ny bruker";
+  }
+
   function openModal() {
     clearAuthError();
+    setSignupMode(false);
     modal.hidden = false;
   }
 
@@ -2266,6 +2347,7 @@
     modal.hidden = true;
     clearAuthError();
     if (emailForm) emailForm.reset();
+    setSignupMode(false);
   }
 
   if (openLoginBtn) openLoginBtn.addEventListener("click", openModal);
@@ -2302,8 +2384,16 @@
   if (signupBtn) {
     signupBtn.addEventListener("click", function () {
       clearAuthError();
+      if (!signupMode) {
+        // Første klikk: bare gå over i registreringsmodus og vis feltene som
+        // trengs for å opprette en konto (brukernavn + bekreft passord).
+        setSignupMode(true);
+        if (usernameInput) usernameInput.focus();
+        return;
+      }
       var email = emailInput ? emailInput.value.trim() : "";
       var password = passwordInput ? passwordInput.value : "";
+      var passwordConfirm = passwordConfirmInput ? passwordConfirmInput.value : "";
       var username = usernameInput ? usernameInput.value.trim() : "";
       if (!username) {
         showAuthError({ code: "custom/missing-username" });
@@ -2311,6 +2401,10 @@
       }
       if (!email || password.length < 6) {
         showAuthError({ code: "auth/weak-password" });
+        return;
+      }
+      if (password !== passwordConfirm) {
+        showAuthError({ code: "custom/password-mismatch" });
         return;
       }
       authMod.createUserWithEmailAndPassword(fbAuth, email, password).then(function (cred) {
@@ -2443,8 +2537,16 @@
     if (document.visibilityState === "hidden") flushPendingPush();
   });
 
+  // Husker om forrige tilstand faktisk var "innlogget", slik at vi kan skille en
+  // ekte utlogging (skal tømme lokalt lagrede favoritter/notater — viktig på en
+  // delt/offentlig maskin) fra den aller første, anonyme innlastingen av siden
+  // (der det ikke finnes noe å tømme, og hvor vi aldri skal slette en anonym
+  // brukers lokale favoritter bare fordi de ikke er innlogget).
+  var wasLoggedIn = false;
+
   authMod.onAuthStateChanged(fbAuth, function (user) {
     if (user) {
+      wasLoggedIn = true;
       currentUid = user.uid;
       if (signedOutBox) signedOutBox.hidden = true;
       if (signedInBox) signedInBox.hidden = false;
@@ -2454,6 +2556,8 @@
       if (emailLabel) emailLabel.textContent = user.displayName || user.email || "";
       if (window.InternshipradarBridge) {
         window.InternshipradarBridge.onChange = debouncedPush;
+        window.InternshipradarBridge.loggedIn = true;
+        window.InternshipradarBridge.reload();
       }
       loadFromFirestoreAndMerge(user.uid);
       // Hvis varsler allerede er slått på i nettleseren (fra tidligere, eller på
@@ -2466,7 +2570,18 @@
       if (signedInBox) signedInBox.hidden = true;
       if (window.InternshipradarBridge) {
         window.InternshipradarBridge.onChange = null;
+        window.InternshipradarBridge.loggedIn = false;
+        // Ekte utlogging (ikke bare første, anonyme innlasting): tøm favoritter,
+        // status, notater og egne lagt-til internships fra denne enhetens
+        // lokale lagring. Dataene er allerede trygt lagret i skyen på kontoen —
+        // dette hindrer bare at de blir liggende synlige for neste person som
+        // bruker samme nettleser/maskin.
+        if (wasLoggedIn) {
+          window.InternshipradarBridge.setState({}, []);
+        }
+        window.InternshipradarBridge.reload();
       }
+      wasLoggedIn = false;
     }
   });
 })();
