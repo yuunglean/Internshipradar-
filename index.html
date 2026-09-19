@@ -2341,7 +2341,8 @@
       else if (state.page === "frister") text = "Frister";
       els.appHeading.textContent = text;
     }
-    if (els.sortSelect) els.sortSelect.hidden = state.page === "frister";
+    if (els.sortSelect) els.sortSelect.hidden = state.page === "frister" || state.page === "own";
+    if (els.statsPanel) els.statsPanel.hidden = state.page === "frister" || state.page === "own";
   }
 
   // Framhever hvilken av de tre "sidene" (Oversikt / Mine internships /
