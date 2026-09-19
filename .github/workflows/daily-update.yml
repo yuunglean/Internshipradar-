@@ -41,7 +41,16 @@ jobs:
             git push
           fi
 
-      - name: Send push-varsler om nærstående søknadsfrister
+      - name: Send e-postvarsler om nærstående søknadsfrister
         env:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-        run: python .github/scripts/send_deadline_pushes.py
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python .github/scripts/send_deadline_emails.py
+
+      - name: Send e-postvarsler om nye internships
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python .github/scripts/send_new_internships_emails.py
