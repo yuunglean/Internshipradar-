@@ -363,6 +363,13 @@
     background: var(--gold-soft);
   }
 
+  .notify-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
   button.notify-toggle {
     font: inherit;
     font-size: 12.5px;
@@ -376,7 +383,6 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-top: 12px;
     transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   }
   button.notify-toggle[aria-pressed="true"] {
@@ -899,7 +905,10 @@
       <span>Legg appen på hjemskjermen: trykk <span class="share-glyph" aria-label="Del-ikonet"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M7.5 8.5L12 4l4.5 4.5"/><path d="M5 12.5v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg></span> nederst i Safari, velg <strong>Legg til på Hjem-skjerm</strong>.</span>
       <button type="button" id="ios-tip-close" aria-label="Lukk tips">✕</button>
     </div>
-    <button type="button" class="notify-toggle" id="notify-toggle" aria-pressed="false">🔔 Varsle meg om frister</button>
+    <div class="notify-buttons">
+      <button type="button" class="notify-toggle" id="notify-toggle" aria-pressed="false">🔔 Varsle meg om frister</button>
+      <button type="button" class="notify-toggle" id="new-items-toggle" aria-pressed="false">🆕 Varsle meg om nye internships</button>
+    </div>
   </header>
 
   <section class="controls">
@@ -1354,6 +1363,7 @@
     sortSelect: document.getElementById("sort-select"),
     favFilterBtn: document.getElementById("fav-filter"),
     notifyToggle: document.getElementById("notify-toggle"),
+    newItemsToggle: document.getElementById("new-items-toggle"),
     search: document.getElementById("search"),
     list: document.getElementById("list"),
     empty: document.getElementById("empty"),
@@ -1928,17 +1938,24 @@
     render();
   }
 
+  // Generisk hjelper: åpner innloggingsvinduet med en forklarende feilmelding.
+  // Brukes både for favoritter og for varsler som krever en konto (e-postvarsler
+  // kan bare sendes til en pålogget brukers Firebase-konto).
+  function promptLogin(message) {
+    var modal = document.getElementById("auth-modal");
+    var errorBox = document.getElementById("auth-error");
+    if (errorBox) {
+      errorBox.textContent = message;
+      errorBox.hidden = false;
+    }
+    if (modal) modal.hidden = false;
+  }
+
   // Favoritter skal kun kunne lagres av innloggede brukere (slik at de faktisk
   // følger kontoen, ikke bare enheten). Hvis noen klikker stjernen uten å være
   // innlogget, åpner vi innloggingsvinduet i stedet for å lagre noe lokalt.
   function promptLoginForFavorite() {
-    var modal = document.getElementById("auth-modal");
-    var errorBox = document.getElementById("auth-error");
-    if (errorBox) {
-      errorBox.textContent = "Logg inn for å lagre favoritter.";
-      errorBox.hidden = false;
-    }
-    if (modal) modal.hidden = false;
+    promptLogin("Logg inn for å lagre favoritter.");
   }
 
   function removeItem(id) {
@@ -2010,6 +2027,7 @@
 
   var NOTIFY_KEY = "internshipradar_notify_enabled";
   var NOTIFIED_KEY = "internshipradar_notified_v1";
+  var NEW_ITEMS_NOTIFY_KEY = "internshipradar_newitems_notify_enabled";
 
   function notifyEnabled() {
     try { return localStorage.getItem(NOTIFY_KEY) === "1"; } catch (e) { return false; }
@@ -2017,6 +2035,18 @@
 
   function setNotifyEnabled(on) {
     try { localStorage.setItem(NOTIFY_KEY, on ? "1" : "0"); } catch (e) {}
+  }
+
+  // "Varsle meg om nye internships" er en egen, separat e-post-preferanse —
+  // uavhengig av fristvarslene over. Krever ikke nettleser-varsel-tillatelse,
+  // siden dette kun sendes som e-post og aldri vises som en lokal notifikasjon
+  // i nettleseren.
+  function newItemsNotifyEnabled() {
+    try { return localStorage.getItem(NEW_ITEMS_NOTIFY_KEY) === "1"; } catch (e) { return false; }
+  }
+
+  function setNewItemsNotifyEnabled(on) {
+    try { localStorage.setItem(NEW_ITEMS_NOTIFY_KEY, on ? "1" : "0"); } catch (e) {}
   }
 
   function loadNotified() {
@@ -2069,6 +2099,16 @@
     saveNotified(notified);
   }
 
+  // Sender den nye på/av-tilstanden videre til innloggings-scriptet (hvis det
+  // har lastet), som lagrer den som e-postvarsel-preferanse på kontoen. Er man
+  // ikke innlogget, gjør hooken ingenting — man må være innlogget for at det
+  // skal finnes en e-postadresse å sende til.
+  function syncEmailNotifyPref(on) {
+    if (window.InternshipradarBridge && window.InternshipradarBridge.onNotifyPrefChange) {
+      window.InternshipradarBridge.onNotifyPrefChange(on);
+    }
+  }
+
   if (els.notifyToggle) {
     els.notifyToggle.addEventListener("click", function () {
       if (!window.Notification) return;
@@ -2077,6 +2117,7 @@
         setNotifyEnabled(next);
         updateNotifyButton();
         if (next) checkDeadlineNotifications();
+        syncEmailNotifyPref(next);
         return;
       }
       Notification.requestPermission().then(function (perm) {
@@ -2084,10 +2125,42 @@
           setNotifyEnabled(true);
           updateNotifyButton();
           checkDeadlineNotifications();
+          syncEmailNotifyPref(true);
         }
       });
     });
     updateNotifyButton();
+  }
+
+  function updateNewItemsButton() {
+    if (!els.newItemsToggle) return;
+    var on = newItemsNotifyEnabled();
+    els.newItemsToggle.setAttribute("aria-pressed", String(on));
+    els.newItemsToggle.textContent = on ? "🆕 Varsler på (nye internships)" : "🆕 Varsle meg om nye internships";
+  }
+
+  // Sender den nye på/av-tilstanden videre til innloggings-scriptet, som lagrer
+  // den som en egen e-postvarsel-preferanse på kontoen (helt uavhengig av
+  // fristvarslene). Er man ikke innlogget, gjør hooken ingenting.
+  function syncNewItemsNotifyPref(on) {
+    if (window.InternshipradarBridge && window.InternshipradarBridge.onNewItemsPrefChange) {
+      window.InternshipradarBridge.onNewItemsPrefChange(on);
+    }
+  }
+
+  if (els.newItemsToggle) {
+    els.newItemsToggle.addEventListener("click", function () {
+      var loggedIn = !!(window.InternshipradarBridge && window.InternshipradarBridge.loggedIn);
+      if (!loggedIn) {
+        promptLogin("Logg inn for å få e-postvarsel om nye internships.");
+        return;
+      }
+      var next = !newItemsNotifyEnabled();
+      setNewItemsNotifyEnabled(next);
+      updateNewItemsButton();
+      syncNewItemsNotifyPref(next);
+    });
+    updateNewItemsButton();
   }
 
   function reloadItems() {
@@ -2155,7 +2228,13 @@
     // Satt av det valgfrie innloggings-scriptet lenger nede (hvis Firebase laster
     // OK). Står som false som standard, slik at favoritt-knappen krever innlogging
     // også i tilfeller der Firebase ikke laster i det hele tatt.
-    loggedIn: false
+    loggedIn: false,
+    // Satt av innloggings-scriptet: kalles med true/false hver gang "Varsle meg
+    // om frister"-knappen endrer tilstand, slik at e-postvarsel-preferansen kan
+    // lagres på brukerens konto (kun mulig når man er innlogget).
+    onNotifyPrefChange: null,
+    // Samme mønster, men for den separate "Varsle meg om nye internships"-knappen.
+    onNewItemsPrefChange: null
   };
 
   boot();
@@ -2211,11 +2290,6 @@
     measurementId: "G-ZKCQS262G1"
   };
 
-  // Generert i Firebase-konsollen: Project Settings → Cloud Messaging →
-  // Web Push certificates ("Generer nøkkelpar"). Push-varsler (som kommer selv
-  // om siden er lukket) er avslått helt til denne er fylt inn med en ekte nøkkel.
-  var VAPID_KEY = "BIjG7cMCzLduyeY5QLHfne9w_GEAMYkGTb-Fel9gIhJfzrI06joCtC5cBXJXRToDLoBeWpngEBkuSaLtigoOxhY";
-
   var fbApp, fbAuth, fbDb;
   var appMod, authMod, fsMod;
 
@@ -2235,70 +2309,38 @@
     return;
   }
 
-  // Cloud Messaging (push-varsler) er en HELT egen, valgfri bit oppå resten av
-  // Firebase-oppsettet: hvis nettleseren ikke støtter det (f.eks. eldre Safari/
-  // iOS) eller modulen ikke laster, skal verken innlogging eller synk påvirkes —
-  // brukeren beholder da bare de vanlige varslene som krever at fanen er åpen.
-  var messagingMod = null;
-  var fbMessaging = null;
-  try {
-    messagingMod = await import(SDK + "firebase-messaging.js");
-    var supported = await messagingMod.isSupported();
-    if (supported) {
-      fbMessaging = messagingMod.getMessaging(fbApp);
-      messagingMod.onMessage(fbMessaging, function (payload) {
-        // Push kom mens fanen faktisk var åpen — FCM viser da ikke varselet
-        // automatisk, så vi må vise det selv med samme API som de vanlige
-        // frist-varslene bruker.
-        var n = payload && payload.notification ? payload.notification : {};
-        try {
-          new Notification(n.title || "Internshipradar", {
-            body: n.body || "",
-            tag: (payload.data && payload.data.tag) || "internshipradar-push"
-          });
-        } catch (e) {}
-      });
-    }
-  } catch (e) {
-    messagingMod = null;
-    fbMessaging = null;
-  }
-
-  function pushNotifyLocallyEnabled() {
+  function emailNotifyLocallyEnabled() {
     try { return localStorage.getItem("internshipradar_notify_enabled") === "1"; } catch (e) { return false; }
   }
 
-  // Registrerer denne enheten for push-varsler ved å be om en FCM-token og lagre
-  // den på brukerens Firestore-dokument, slik at den daglige, automatiske jobben
-  // kan finne den igjen og sende et push-varsel selv om ingen har siden åpen.
-  // Krever innlogging (vi trenger et sted å lagre tokenet), varsel-tillatelse
-  // gitt i nettleseren, og at "Varsle meg om frister" er slått på.
-  function registerPushForCurrentUser() {
-    if (!fbMessaging || !messagingMod || !currentUid) return;
-    if (!window.Notification || Notification.permission !== "granted") return;
-    if (!pushNotifyLocallyEnabled()) return;
-    if (!VAPID_KEY || VAPID_KEY.indexOf("SETT_INN") === 0) return;
-
-    navigator.serviceWorker.register("firebase-messaging-sw.js").then(function (registration) {
-      return messagingMod.getToken(fbMessaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
-    }).then(function (token) {
-      if (!token || !currentUid) return;
-      var ref = fsMod.doc(fbDb, "users", currentUid);
-      return fsMod.setDoc(ref, { fcmTokens: fsMod.arrayUnion(token) }, { merge: true });
-    }).catch(function () {
-      // Push-registrering feilet (avslått, ikke støttet, e.l.) — påvirker ikke
-      // resten av appen, brukeren har fortsatt de vanlige åpen-fane-varslene.
+  // Lagrer på/av-valget for "Varsle meg om frister" som en e-postvarsel-
+  // preferanse på brukerens Firestore-dokument, slik at den daglige, automatiske
+  // jobben vet om den skal sende e-post til denne brukeren. Krever innlogging
+  // (vi trenger en e-postadresse å sende til — den henter jobben selv fra
+  // brukerens Firebase-konto, den lagres ikke separat her).
+  function syncEmailNotifyPreference(on) {
+    if (!currentUid) return;
+    var ref = fsMod.doc(fbDb, "users", currentUid);
+    fsMod.setDoc(ref, { emailNotifyEnabled: !!on }, { merge: true }).catch(function () {
+      // Lagring feilet (nettverk e.l.) — påvirker ikke resten av appen, kan
+      // synkroniseres på nytt neste gang brukeren trykker på knappen.
     });
   }
+  window.InternshipradarBridge.onNotifyPrefChange = syncEmailNotifyPreference;
 
-  var notifyToggleBtn = document.getElementById("notify-toggle");
-  if (notifyToggleBtn) {
-    notifyToggleBtn.addEventListener("click", function () {
-      // Kort forsinkelse slik at nettleserens tillatelse-dialog (hvis den vises)
-      // rekker å bli besvart før vi sjekker Notification.permission.
-      setTimeout(registerPushForCurrentUser, 300);
-    });
+  function newItemsNotifyLocallyEnabled() {
+    try { return localStorage.getItem("internshipradar_newitems_notify_enabled") === "1"; } catch (e) { return false; }
   }
+
+  // Samme mønster som syncEmailNotifyPreference, men for et helt separat felt
+  // ("newItemsNotifyEnabled") slik at de to varslene kan slås av/på uavhengig
+  // av hverandre.
+  function syncNewItemsNotifyPreference(on) {
+    if (!currentUid) return;
+    var ref = fsMod.doc(fbDb, "users", currentUid);
+    fsMod.setDoc(ref, { newItemsNotifyEnabled: !!on }, { merge: true }).catch(function () {});
+  }
+  window.InternshipradarBridge.onNewItemsPrefChange = syncNewItemsNotifyPreference;
 
   var AUTH_ERROR_MESSAGES = {
     "auth/email-already-in-use": "Denne e-postadressen er allerede registrert. Prøv å logge inn i stedet.",
@@ -2560,10 +2602,11 @@
         window.InternshipradarBridge.reload();
       }
       loadFromFirestoreAndMerge(user.uid);
-      // Hvis varsler allerede er slått på i nettleseren (fra tidligere, eller på
-      // en annen enhet), registrer push med en gang etter innlogging også — ikke
-      // bare når man klikker "Varsle meg om frister"-knappen.
-      registerPushForCurrentUser();
+      // Sørg for at kontoens e-postvarsel-preferanse stemmer med denne enhetens
+      // lokale "Varsle meg om frister"-valg med en gang etter innlogging — ikke
+      // bare når man trykker på knappen selv.
+      syncEmailNotifyPreference(emailNotifyLocallyEnabled());
+      syncNewItemsNotifyPreference(newItemsNotifyLocallyEnabled());
     } else {
       currentUid = null;
       if (signedOutBox) signedOutBox.hidden = false;
