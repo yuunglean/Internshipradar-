@@ -63,9 +63,54 @@
 
   header.top { margin-bottom: 34px; }
 
-  .auth-panel { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+  .auth-panel { display: flex; justify-content: flex-end; }
   .auth-signed-out[hidden], .auth-signed-in[hidden] { display: none; }
+  .auth-signed-out { display: flex; align-items: center; gap: 8px; }
   .auth-signed-in { display: flex; align-items: center; gap: 10px; }
+  button.auth-btn-solid {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  button.auth-btn-solid:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); filter: brightness(1.08); }
+
+  .site-nav {
+    max-width: 1180px;
+    margin: 0 auto 32px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .site-nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .site-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-family: "Sora", -apple-system, sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--ink);
+    cursor: pointer;
+    flex: none;
+  }
+  .site-nav-links {
+    display: none;
+    align-items: center;
+    gap: 30px;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .site-nav-links span[data-nav] { cursor: pointer; transition: color 0.15s ease; }
+  .site-nav-links span[data-nav]:hover { color: var(--ink); }
+  .site-nav-links .site-nav-static { color: var(--ink-faint); cursor: default; }
+  @media (min-width: 860px) {
+    .site-nav-links { display: flex; }
+  }
   .auth-email {
     font-size: 12px;
     color: var(--ink-soft);
@@ -833,6 +878,52 @@
 
   .landing h1 { font-size: clamp(34px, 8vw, 52px); }
 
+  .landing-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+  }
+
+  @media (min-width: 980px) {
+    .landing {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+      max-width: 1180px;
+      margin: 0 auto;
+      gap: 64px;
+      padding: 40px 10px 70px;
+    }
+    .landing-copy {
+      align-items: flex-start;
+      text-align: left;
+      max-width: 560px;
+      flex: none;
+    }
+    .landing h1 { font-size: 54px; line-height: 1.12; }
+    .hero-pills { justify-content: flex-start; }
+    .hero-visual {
+      position: relative;
+      width: 480px;
+      height: 480px;
+      flex: none;
+      margin-top: 0;
+    }
+    .hero-radar {
+      width: 340px;
+      height: 340px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .hero-stat-chip { position: absolute; top: 4px; left: 0; }
+    .hero-companies { position: absolute; right: 0; bottom: 8px; width: 290px; }
+  }
+
   .landing-sub {
     color: var(--ink-soft);
     font-size: 15px;
@@ -1023,19 +1114,38 @@
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="auth-panel" id="auth-panel">
-    <div class="auth-signed-out" id="auth-signed-out">
-      <button type="button" class="auth-btn" id="auth-open-login">Logg inn / Registrer</button>
+<nav class="site-nav" id="site-nav">
+  <div class="site-nav-inner">
+    <div class="site-nav-brand" id="site-nav-brand">
+      <svg width="22" height="22" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="13" cy="13" r="11.5" fill="none" stroke="var(--accent)" stroke-width="1.6" opacity="0.5"></circle>
+        <circle cx="13" cy="13" r="7" fill="none" stroke="var(--accent)" stroke-width="1.6" opacity="0.8"></circle>
+        <circle cx="13" cy="13" r="2.2" fill="var(--accent)"></circle>
+      </svg>
+      <span>Internshipradar</span>
     </div>
-    <div class="auth-signed-in" id="auth-signed-in" hidden>
-      <span class="auth-email" id="auth-email"></span>
-      <button type="button" class="auth-edit-name-btn" id="auth-edit-username" title="Endre brukernavn" aria-label="Endre brukernavn">✎</button>
-      <button type="button" class="auth-btn auth-btn-ghost" id="auth-signout">Logg ut</button>
+    <div class="site-nav-links">
+      <span data-nav="overview">Oversikt</span>
+      <span data-nav="own">Mine internships</span>
+      <span data-nav="deadline">Frister</span>
+      <span class="site-nav-static" title="Kommer snart">Om oss</span>
+    </div>
+    <div class="auth-panel" id="auth-panel">
+      <div class="auth-signed-out" id="auth-signed-out">
+        <button type="button" class="auth-btn" id="auth-open-login">Logg inn</button>
+        <button type="button" class="auth-btn auth-btn-solid" id="auth-open-signup">Registrer deg</button>
+      </div>
+      <div class="auth-signed-in" id="auth-signed-in" hidden>
+        <span class="auth-email" id="auth-email"></span>
+        <button type="button" class="auth-edit-name-btn" id="auth-edit-username" title="Endre brukernavn" aria-label="Endre brukernavn">✎</button>
+        <button type="button" class="auth-btn auth-btn-ghost" id="auth-signout">Logg ut</button>
+      </div>
     </div>
   </div>
+</nav>
 
   <div class="landing" id="landing">
+   <div class="landing-copy">
     <p class="eyebrow">Business · Økonomi · Finance</p>
     <h1>Finn ditt neste internship først.</h1>
     <p class="landing-sub"><span id="hero-open-count">–</span> aktive internships og traineeprogram innen business og økonomi i Norge — samlet automatisk og oppdatert hver dag.</p>
@@ -1050,6 +1160,7 @@
       <button type="button" class="hero-pill" id="hero-pill-fav">★ Mine favoritter</button>
       <button type="button" class="hero-pill" id="hero-pill-soon">⏱ <span id="hero-pill-soon-count">–</span> frister denne uken</button>
     </div>
+   </div>
 
     <div class="hero-visual">
       <svg class="hero-radar" width="200" height="200" viewBox="0 0 220 220" aria-hidden="true">
@@ -1081,6 +1192,7 @@
     </div>
   </div>
 
+  <div class="wrap">
   <div id="app-view" hidden>
   <header class="top">
     <p class="eyebrow">Næringsliv · karriereradar</p>
@@ -1623,6 +1735,29 @@
       try { history.pushState({ view: "internships" }, "", "#internships"); } catch (e) {}
     });
   }
+
+  // Toppmenyens lenker (kun synlige på bredere skjermer) navigerer inn i den
+  // samme appen, og "Mine internships" / "Frister" setter samme sortering som
+  // de tilsvarende funksjonene lenger nede i appen bruker.
+  var siteNavBrand = document.getElementById("site-nav-brand");
+  if (siteNavBrand) {
+    siteNavBrand.addEventListener("click", function () {
+      showLanding();
+      try { history.pushState({ view: "landing" }, "", location.pathname + location.search); } catch (e) {}
+    });
+  }
+  document.querySelectorAll(".site-nav-links [data-nav]").forEach(function (el) {
+    el.addEventListener("click", function () {
+      var nav = el.getAttribute("data-nav");
+      if (nav === "own" || nav === "deadline") {
+        state.sortBy = nav === "own" ? "own" : "deadline";
+        if (els.sortSelect) els.sortSelect.value = state.sortBy;
+      }
+      showApp();
+      render();
+      try { history.pushState({ view: "internships" }, "", "#internships"); } catch (e) {}
+    });
+  });
 
   window.addEventListener("popstate", function (e) {
     if (e.state && e.state.view === "internships") {
@@ -2669,6 +2804,13 @@
   }
 
   if (openLoginBtn) openLoginBtn.addEventListener("click", openModal);
+  var openSignupBtn = document.getElementById("auth-open-signup");
+  if (openSignupBtn) {
+    openSignupBtn.addEventListener("click", function () {
+      openModal();
+      setSignupMode(true);
+    });
+  }
   if (modalCloseBtn) modalCloseBtn.addEventListener("click", closeModal);
   modal.addEventListener("click", function (ev) {
     if (ev.target === modal) closeModal();
