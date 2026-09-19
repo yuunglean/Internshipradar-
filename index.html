@@ -1680,10 +1680,25 @@
       state.favOnly = false;
       state.soonOnly = false;
       if (els.favFilterBtn) els.favFilterBtn.setAttribute("aria-pressed", "false");
-      if (nav === "own" || nav === "deadline") {
-        state.sortBy = nav === "own" ? "own" : "deadline";
+
+      if (nav === "own") {
+        state.sortBy = "own";
+        if (els.sortSelect) els.sortSelect.value = state.sortBy;
+      } else if (nav === "deadline") {
+        // "Frister" i toppmenyen skal oppføre seg som "frister denne uken"-
+        // pillen på forsiden: vise KUN internships med søknadsfrist innen 7
+        // dager, ikke bare sortere hele listen på nærmeste frist.
+        state.sortBy = "deadline";
+        if (els.sortSelect) els.sortSelect.value = state.sortBy;
+        state.soonOnly = true;
+      } else {
+        // "Oversikt" nullstiller alltid til standardvisningen (hele listen,
+        // sortert på nærmeste frist) — uansett hvilken sortering/filter som
+        // var aktiv fra før (f.eks. etter "Mine internships").
+        state.sortBy = "deadline";
         if (els.sortSelect) els.sortSelect.value = state.sortBy;
       }
+
       showApp();
       render();
       try { history.pushState({ view: "internships" }, "", "#internships"); } catch (e) {}
