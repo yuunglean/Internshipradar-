@@ -108,6 +108,7 @@
   }
   .site-nav-links span[data-nav] { cursor: pointer; transition: color 0.15s ease; }
   .site-nav-links span[data-nav]:hover { color: var(--ink); }
+  .site-nav-links span[data-nav].active { color: var(--ink); font-weight: 600; }
   .site-nav-links .site-nav-static { color: var(--ink-faint); cursor: default; }
   @media (min-width: 860px) {
     .site-nav-links { display: flex; }
@@ -313,6 +314,7 @@
     color: var(--ink);
     line-height: 1.45;
   }
+  .ios-tip[hidden] { display: none; }
   .ios-tip strong { font-weight: 700; }
   .ios-tip button {
     flex: none;
@@ -1087,7 +1089,7 @@
 
   <div class="landing" id="landing">
    <div class="landing-copy">
-    <p class="eyebrow">Business · Økonomi · Finance</p>
+    <p class="eyebrow">Business · Økonomi · Finans</p>
     <h1>Finn ditt neste internship</h1>
     <p class="landing-sub"><span id="hero-open-count">–</span> aktive internships og traineeprogram innen business og økonomi i Norge — samlet automatisk og oppdatert hver dag.</p>
 
@@ -1123,7 +1125,7 @@
   <div class="wrap">
   <div id="app-view" hidden>
   <header class="top">
-    <p class="eyebrow">Næringsliv · karriereradar</p>
+    <p class="eyebrow">Business · Økonomi · Finans</p>
     <h1 id="app-heading">Internshipradar</h1>
     <div class="stats" id="stats"></div>
     <details class="stats-panel" id="stats-panel">
@@ -1947,15 +1949,30 @@
     els.fieldFilters.value = state.activeField;
   }
 
-  function renderSortSelect() {
+  // På "Oversikt" gir det ikke mening å ha "Mine egne internships" som valg i
+  // sorteringsboksen når toppmenyen med "Mine internships"-lenken faktisk er
+  // synlig (skjermer ≥860px) — da er valget bare en duplikat vei dit. På
+  // smale skjermer er toppmenylenkene skjult, så der er dette
+  // sorteringsvalget fortsatt eneste vei inn til "Mine internships", og
+  // beholdes derfor.
+  function renderSortOptions() {
+    var prevValue = els.sortSelect.value;
+    var navLinksVisible = false;
+    try { navLinksVisible = window.matchMedia("(min-width: 860px)").matches; } catch (e) {}
     els.sortSelect.innerHTML = "";
     SORT_OPTIONS.forEach(function (opt) {
+      if (opt.value === "own" && state.page === "oversikt" && navLinksVisible) return;
       var o = document.createElement("option");
       o.value = opt.value;
       o.textContent = opt.label;
       els.sortSelect.appendChild(o);
     });
-    els.sortSelect.value = state.sortBy;
+    var hasPrev = Array.prototype.some.call(els.sortSelect.options, function (o) { return o.value === prevValue; });
+    els.sortSelect.value = hasPrev ? prevValue : state.sortBy;
+  }
+
+  function renderSortSelect() {
+    renderSortOptions();
     els.sortSelect.addEventListener("change", function () {
       state.sortBy = els.sortSelect.value;
       // Holder sidetittelen konsistent med hva man faktisk valgte i
@@ -2213,6 +2230,8 @@
     updateLandingCount(open.length);
     updateHeroStats(open);
     updateAppHeading();
+    updateActiveNav();
+    renderSortOptions();
     renderStatsBreakdown();
     observeCards();
   }
@@ -2308,6 +2327,20 @@
       els.appHeading.textContent = text;
     }
     if (els.sortSelect) els.sortSelect.hidden = state.page === "frister";
+  }
+
+  // Framhever hvilken av de tre "sidene" (Oversikt / Mine internships /
+  // Frister) man befinner seg på i toppmenyen, slik at den aktive lenken
+  // vises i hvitt i stedet for den vanlige, dempede fargen.
+  function updateActiveNav() {
+    document.querySelectorAll(".site-nav-links [data-nav]").forEach(function (el) {
+      var nav = el.getAttribute("data-nav");
+      var isActive =
+        (nav === "overview" && state.page === "oversikt") ||
+        (nav === "own" && state.page === "own") ||
+        (nav === "deadline" && state.page === "frister");
+      el.classList.toggle("active", isActive);
+    });
   }
 
   var prefersReducedMotion = (function () {
