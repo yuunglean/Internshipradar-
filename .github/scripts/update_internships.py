@@ -18,6 +18,12 @@ import anthropic
 
 DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data.json")
 
+# Skrives av denne jobben hver dag (tom liste hvis ingen nye) og leses av
+# send_new_internships_emails.py rett etter, slik at den kan sende ut et
+# e-postvarsel om nøyaktig dagens nye oppføringer uten å måtte diffe data.json
+# selv. Aldri en fil som committes — kun et scratch-resultat for denne kjøringen.
+NEW_ITEMS_PATH = os.path.join(os.path.dirname(DATA_PATH), "new_items_today.json")
+
 FIELD_OPTIONS = [
     "Consulting",
     "Revisjon & rådgivning",
@@ -105,6 +111,25 @@ def save(items):
         f.write("\n")
 
 
+def save_new_items_file(items):
+    slim = [
+        {
+            "id": it["id"],
+            "title": it["title"],
+            "company": it["company"],
+            "deadline": it["deadline"],
+            "url": it["url"],
+        }
+        for it in items
+    ]
+    try:
+        with open(NEW_ITEMS_PATH, "w", encoding="utf-8") as f:
+            json.dump(slim, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+    except Exception as e:
+        print(f"Klarte ikke å skrive new_items_today.json: {e}")
+
+
 def extract_json_array(text):
     text = text.strip()
     # Strip markdown code fences if present
@@ -118,17 +143,38 @@ def extract_json_array(text):
     return json.loads(text[start : end + 1])
 
 
+ID_SLUG_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+STRING_FIELDS = ["id", "title", "company", "location", "field", "url", "source", "description"]
+
+
 def validate_item(item, existing_ids, seen_ids):
     required = ["id", "title", "company", "location", "field", "deadline", "url", "source", "description"]
     for key in required:
         if not item.get(key):
             print(f"  Hopper over (mangler '{key}'): {item.get('title', '?')}")
             return False
+    # Sikkerhetsnett: hvis modellsvaret av en eller annen grunn ikke er rene
+    # tekststrenger (f.eks. en liste/dict pga. en uventet respons), skal vi
+    # aldri skrive det rått inn i data.json — klienten forventer strenger.
+    for key in STRING_FIELDS:
+        if key in item and not isinstance(item[key], str):
+            print(f"  Hopper over (feil type på '{key}'): {item.get('title', '?')}")
+            return False
     if item["field"] not in FIELD_OPTIONS:
         print(f"  Hopper over (ugyldig field '{item['field']}'): {item['title']}")
         return False
+    # "id" skal alltid være en trygg, url-vennlig slug (kun a-z, 0-9 og
+    # bindestrek) — dette er allerede det systemprompten ber om (regel 8), men
+    # vi håndhever det også her i stedet for å stole blindt på modellsvaret,
+    # siden id-en brukes direkte som nøkkel i klientens lokale/synkroniserte data.
+    if not ID_SLUG_RE.match(item["id"]):
+        print(f"  Hopper over (ugyldig id-format '{item['id']}'): {item['title']}")
+        return False
     if item["id"] in existing_ids or item["id"] in seen_ids:
         print(f"  Hopper over (duplikat id): {item['id']}")
+        return False
+    if not (item["url"].startswith("http://") or item["url"].startswith("https://")):
+        print(f"  Hopper over (usikker url-protokoll): {item['title']}")
         return False
     try:
         date.fromisoformat(item["deadline"])
@@ -189,10 +235,12 @@ def main():
 
     if not accepted:
         print("Ingen nye, gyldige internships funnet i dag.")
+        save_new_items_file([])
         return
 
     updated = existing + accepted
     save(updated)
+    save_new_items_file(accepted)
     print(f"La til {len(accepted)} nye internship(s):")
     for it in accepted:
         print(f"  - {it['company']}: {it['title']} (frist {it['deadline']})")
