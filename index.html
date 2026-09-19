@@ -1777,15 +1777,20 @@
       right.appendChild(a);
     }
 
-    var del = document.createElement("button");
-    del.className = "icon-btn";
-    del.type = "button";
-    del.title = "Fjern";
-    del.textContent = "✕";
-    del.addEventListener("click", function () {
-      removeItem(item.id);
-    });
-    right.appendChild(del);
+    // "Fjern" skal bare finnes for internships brukeren selv har lagt til manuelt.
+    // Automatisk hentede oppføringer skal ikke kunne fjernes fra listen — de er
+    // felles data for alle besøkende, ikke noe den enkelte bruker eier.
+    if (item.manual) {
+      var del = document.createElement("button");
+      del.className = "icon-btn";
+      del.type = "button";
+      del.title = "Fjern";
+      del.textContent = "✕";
+      del.addEventListener("click", function () {
+        removeItem(item.id);
+      });
+      right.appendChild(del);
+    }
 
     bottom.appendChild(right);
     card.appendChild(bottom);
