@@ -976,7 +976,7 @@
     <div class="auth-divider"><span>eller</span></div>
     <form id="auth-email-form">
       <label class="field-label full" id="auth-username-label" hidden>Brukernavn <span class="auth-field-hint">(kun ved registrering)</span>
-        <input type="text" id="auth-username-input" maxlength="30" placeholder="F.eks. Emil">
+        <input type="text" id="auth-username-input" maxlength="30" placeholder="">
       </label>
       <label class="field-label full">E-post
         <input type="email" id="auth-email-input" required placeholder="deg@epost.no">
@@ -1352,7 +1352,8 @@
 
   var SORT_OPTIONS = [
     { value: "deadline", label: "Sorter: Frist (nærmest)" },
-    { value: "expired", label: "Sorter: Utløpte frister" }
+    { value: "expired", label: "Sorter: Utløpte frister" },
+    { value: "own", label: "Sorter: Mine egne internships" }
   ];
 
   var els = {
@@ -1811,7 +1812,19 @@
     // oppføringene (nyest utløpt først) i stedet for å sortere de åpne — det
     // finnes ingen egen "utløpte"-seksjon lenger, dette er nå eneste sted de vises.
     var showExpired = state.sortBy === "expired";
-    var visible = (showExpired ? closed : open).filter(matches);
+    // "Sorter: Mine egne internships" viser KUN internships brukeren selv har
+    // lagt til manuelt (uansett om fristen er passert eller ikke), sortert på
+    // nærmeste frist først — samme rekkefølge som standardsorteringen.
+    var showOwn = state.sortBy === "own";
+    var pool;
+    if (showOwn) {
+      pool = state.items
+        .filter(function (it) { return it.manual; })
+        .sort(function (a, b) { return compareItems(a, b, false); });
+    } else {
+      pool = showExpired ? closed : open;
+    }
+    var visible = pool.filter(matches);
 
     els.list.innerHTML = "";
     visible.forEach(function (it) { els.list.appendChild(cardNode(it)); });
