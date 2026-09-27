@@ -2,7 +2,11 @@ name: Daglig oppdatering av internships
 
 on:
   schedule:
-    # 05:00 UTC ~ 06:00-07:00 norsk tid (avhengig av sommer-/vintertid)
+    # Kjøres hver dag kl. 05:00 UTC ~ 06:00-07:00 norsk tid, men selve
+    # research-steget (som koster Anthropic API-kreditter) kjører kun på
+    # mandager - se "Sjekk om det er mandag" og betingelsen på research-steget
+    # under. Fristvarsel-e-postene (som er gratis) fortsetter å sjekkes hver
+    # dag, slik at ingen mister et fristvarsel bare fordi det ikke er mandag.
     - cron: '0 5 * * *'
   workflow_dispatch: {}
 
@@ -16,6 +20,15 @@ jobs:
       - name: Sjekk ut repoet
         uses: actions/checkout@v4
 
+      - name: Sjekk om det er mandag
+        id: dagsjekk
+        run: |
+          if [ "$(date -u +%u)" = "1" ]; then
+            echo "er_mandag=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "er_mandag=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Sett opp Python
         uses: actions/setup-python@v5
         with:
@@ -24,7 +37,8 @@ jobs:
       - name: Installer avhengigheter
         run: pip install anthropic firebase-admin
 
-      - name: Kjør research og oppdater data.json
+      - name: Kjør research og oppdater data.json (kun mandager, eller manuell kjøring)
+        if: steps.dagsjekk.outputs.er_mandag == 'true' || github.event_name == 'workflow_dispatch'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python .github/scripts/update_internships.py
